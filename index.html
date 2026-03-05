@@ -45,9 +45,24 @@
 
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone@7/babel.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.26.0/babel.min.js" crossorigin></script>
 
-  <script type="text/babel" data-type="module">
+  <script>
+    // Fehlerbehandlung falls Babel/React nicht laden
+    window.onerror = function(msg, url, line) {
+      var root = document.getElementById('root');
+      if (root && root.querySelector('.loader')) {
+        root.innerHTML = '<div style="padding:40px;text-align:center;font-family:sans-serif;">' +
+          '<h2 style="color:#1a365d;">Bruehl App</h2>' +
+          '<p style="color:#c53030;margin:16px 0;">Fehler beim Laden: ' + msg + '</p>' +
+          '<p>Bitte pruefe deine Internetverbindung und lade die Seite neu.</p>' +
+          '<button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;background:#1a365d;color:white;border:none;border-radius:8px;cursor:pointer;">Neu laden</button>' +
+          '</div>';
+      }
+    };
+  </script>
+
+  <script type="text/babel" data-presets="react">
     const { useState, useEffect, useCallback, useRef } = React;
 
 
@@ -613,8 +628,8 @@ const AIInsights = () => {
     if (API_AVAILABLE) {
       try {
         const data = await fetchAPI("/ai/ask");
-        if (data?.answer) { setResponse(data.answer); setLoading(false); return; }
-      } catch {}
+        if (data && data.answer) { setResponse(data.answer); setLoading(false); return; }
+      } catch(e) {}
     }
 
     // Ohne Backend: Claude API direkt (funktioniert nur in claude.ai Artifact)
@@ -637,7 +652,7 @@ Frage: ${query}`
         }),
       });
       const data = await res.json();
-      const text = data.content?.filter(b => b.type === "text").map(b => b.text).join("\n") || "Keine Antwort erhalten.";
+      const text = data.content && data.content.filter(b => b.type === "text").map(b => b.text).join("\n") || "Keine Antwort erhalten.";
       setResponse(text);
     } catch (err) {
       setResponse("Der KI-Assistent funktioniert aktuell in zwei Modi:\n\n" +
@@ -1114,7 +1129,7 @@ const MapPanel = () => {
             {filtered.map(poi => {
               const x = toX(poi.lng);
               const y = toY(poi.lat);
-              const isSelected = selectedPoi?.id === poi.id;
+              const isSelected = selectedPoi && selectedPoi.id === poi.id;
               const isHovered = mapHover === poi.id;
               return (
                 <g key={poi.id}
@@ -1386,7 +1401,7 @@ async function fetchAPI(endpoint) {
   try {
     const res = await fetch(`${API_BASE}${endpoint}`, { signal: AbortSignal.timeout(3000) });
     if (res.ok) return res.json();
-  } catch { /* Backend nicht erreichbar */ }
+  } catch(e) { /* Backend nicht erreichbar */ }
   return null;
 }
 
@@ -1395,7 +1410,7 @@ try {
   fetch(`${API_BASE.replace('/api', '/health')}`, { signal: AbortSignal.timeout(2000) })
     .then(r => { if (r.ok) API_AVAILABLE = true; })
     .catch(() => {});
-} catch {}
+} catch(e) {}
 
 function BruehlApp() {
   const [mainView, setMainView] = useState("aktuell"); // aktuell | historisch
@@ -1591,9 +1606,9 @@ function BruehlApp() {
   );
 }
 
-
-
-
+    // App starten
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(BruehlApp));
 
   </script>
 
