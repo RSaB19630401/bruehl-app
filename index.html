@@ -322,32 +322,24 @@ const HISTORICAL_DATA = {
 
 // Statische Fallback-Daten (werden angezeigt bis Live-Daten geladen sind)
 const FALLBACK_NEWS = [
-  { id: 1, title: "Erfassung von Tieren, Pflanzen und Biotopen", date: "2026-02-26", source: "gemeinde", category: "umwelt", summary: "Die Gemeinde Brühl startet eine umfassende Erfassung der lokalen Flora, Fauna und Biotope auf dem Gemeindegebiet.", url: "https://www.bruehl-baden.de/" },
-  { id: 2, title: "Ostereierschießen 2026", date: "2026-02-26", source: "gemeinde", category: "kultur", summary: "Das traditionelle Ostereierschießen 2026 wird angekündigt – ein beliebtes Brühler Brauchtumsereignis.", url: "https://www.bruehl-baden.de/" },
-  { id: 3, title: "Kommunale Wärmeplanung: Neue Rechtsgrundlage und erste Ergebnisse", date: "2026-02-20", source: "gemeinde", category: "politik", summary: "Die kommunale Wärmeplanung in Brühl schreitet voran. Neue gesetzliche Grundlagen und erste Planungsergebnisse werden vorgestellt.", url: "https://www.bruehl-baden.de/" },
-  { id: 4, title: "BRÜHL MACHT SAUBER", date: "2026-02-10", source: "gemeinde", category: "umwelt", summary: "Die Gemeinde ruft zur großen Putzaktion auf. Bürgerinnen und Bürger sind eingeladen, gemeinsam für ein sauberes Brühl zu sorgen.", url: "https://www.bruehl-baden.de/" },
-  { id: 5, title: "Fahrzeugbrand am Einkaufszentrum", date: "2026-02-12", source: "feuerwehr", category: "feuerwehr", summary: "Ein Fahrzeug geriet auf dem Parkplatz des Einkaufszentrums in der Mannheimer Landstraße in Brand.", url: "https://ffw-bruehl.de/" },
+  { id: 1, title: "Geplante Tunnelsperrungen 2026", date: "2026-03-01", source: "gemeinde", category: "verkehr", summary: "Die Gemeinde Brühl informiert über geplante Tunnelsperrungen im Jahr 2026. Verkehrsteilnehmer werden gebeten, sich frühzeitig über alternative Routen zu informieren.", url: "https://www.bruehl-baden.de/" },
+  { id: 2, title: "Erfassung von Tieren, Pflanzen und Biotopen", date: "2026-02-26", source: "gemeinde", category: "umwelt", summary: "Die Gemeinde Brühl startet eine umfassende Erfassung der lokalen Flora, Fauna und Biotope auf dem Gemeindegebiet.", url: "https://www.bruehl-baden.de/" },
+  { id: 3, title: "Ostereierschießen 2026", date: "2026-02-26", source: "gemeinde", category: "kultur", summary: "Das traditionelle Ostereierschießen 2026 wird angekündigt – ein beliebtes Brühler Brauchtumsereignis.", url: "https://www.bruehl-baden.de/" },
+  { id: 4, title: "Kommunale Wärmeplanung: Neue Rechtsgrundlage und erste Ergebnisse", date: "2026-02-20", source: "gemeinde", category: "politik", summary: "Die kommunale Wärmeplanung in Brühl schreitet voran. Neue gesetzliche Grundlagen und erste Planungsergebnisse werden vorgestellt.", url: "https://www.bruehl-baden.de/" },
+  { id: 5, title: "Von röhrenden Motoren bis zu stillen Waldwegen", date: "2026-02-19", source: "gemeinde", category: "kultur", summary: "Ein Bericht über die vielfältigen Freizeitmöglichkeiten in und um Brühl – vom Hockenheimring bis zu den Rheinauen.", url: "https://www.bruehl-baden.de/" },
+  { id: 6, title: "Windkraft-Flächen: Weiteres Vorgehen beschlossen", date: "2026-02-18", source: "schwetzinger", category: "politik", summary: "Seit mehr als zehn Jahren beschäftigt die Suche nach Windkraft-Flächen den Verband Rhein-Neckar. In Brühl wurde nun das weitere Vorgehen beschlossen.", url: "https://www.rnz.de/region/rhein-neckar/bruehl.html" },
+  { id: 7, title: "Mehrere Keller aufgebrochen – Zeugenaufruf", date: "2026-02-15", source: "presseportal", category: "feuerwehr", summary: "Unbekannte brachen in der Nacht in mehrere Kellerabteile in Brühl und Rheinau ein und entwendeten hochwertige Fahrräder. Die Polizei sucht Zeugen.", url: "https://www.presseportal.de/blaulicht/r/Br%FChl%20(Baden)" },
+  { id: 8, title: "Fahrzeugbrand am Einkaufszentrum", date: "2026-02-12", source: "feuerwehr", category: "feuerwehr", summary: "Ein Fahrzeug geriet auf dem Parkplatz des Einkaufszentrums in der Mannheimer Landstraße in Brand. Ersthelfer konnten den Brand eindämmen, die Feuerwehr löschte endgültig.", url: "https://ffw-bruehl.de/" },
+  { id: 9, title: "Brandmeldeanlage Schillerschule ausgelöst", date: "2026-02-12", source: "feuerwehr", category: "feuerwehr", summary: "Die Brandmeldeanlage an der Schillerschule löste einen Sabotagealarm aus. Der Hausmeister konnte die Situation selbstständig klären.", url: "https://ffw-bruehl.de/" },
+  { id: 10, title: "BRÜHL MACHT SAUBER", date: "2026-02-10", source: "gemeinde", category: "umwelt", summary: "Die Gemeinde ruft zur großen Putzaktion auf. Bürgerinnen und Bürger sind eingeladen, gemeinsam für ein sauberes Brühl zu sorgen.", url: "https://www.bruehl-baden.de/" },
+  { id: 11, title: "Öffentliche Ausschreibung: Maler- und Trockenbauarbeiten", date: "2026-02-06", source: "gemeinde", category: "wirtschaft", summary: "Die Gemeinde schreibt Maler-, Putz- und Trockenbauarbeiten nach VOB/A öffentlich aus.", url: "https://www.bruehl-baden.de/" },
+  { id: 12, title: "Brandsicherheitswache bei Fastnacht", date: "2026-02-03", source: "feuerwehr", category: "feuerwehr", summary: "Die Feuerwehr stellte den Brandsicherheitswachdienst bei der Prunksitzung des CV 'Die Rohrhöfer Göggel' und bei der Seniorensitzung.", url: "https://ffw-bruehl.de/" },
+  { id: 13, title: "Feuerwehr-Seelsorge-Team im Einsatz", date: "2026-02-02", source: "feuerwehr", category: "feuerwehr", summary: "Das Feuerwehr-Seelsorge-Team wurde alarmiert. Ein Seelsorger aus Brühl übernahm den Einsatz in Altlußheim.", url: "https://ffw-bruehl.de/" },
+  { id: 14, title: "Erste-Hilfe-Fortbildung der Feuerwehr", date: "2026-01-24", source: "feuerwehr", category: "feuerwehr", summary: "Alle Abteilungen der Feuerwehr Brühl frischten ihre Erste-Hilfe-Kenntnisse auf, unterstützt von Ausbildern des DRK-Ortsvereins.", url: "https://ffw-bruehl.de/" },
+  { id: 15, title: "Reifenstecher in Schwetzingen festgenommen", date: "2026-01-20", source: "presseportal", category: "feuerwehr", summary: "Die Polizei konnte in Schwetzingen einen Reifenstecher festnehmen, der auch im Brühler Umfeld aktiv war.", url: "https://www.presseportal.de/blaulicht/r/Br%FChl%20(Baden)" },
 ];
 
-// Live-Nachrichten laden via Netlify Function (sicherer Proxy)
-async function fetchLiveNews() {
-  try {
-    // Netlify Function aufrufen (API-Key ist sicher auf dem Server)
-    var baseUrl = window.location.origin;
-    var response = await fetch(baseUrl + "/api/news", {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-    var data = await response.json();
-    if (data.news && Array.isArray(data.news) && data.news.length > 0) {
-      console.log("Live-Daten geladen:", data.news.length, "Nachrichten");
-      return data.news;
-    }
-  } catch(e) {
-    console.log("Live-Daten nicht verfuegbar, nutze Fallback:", e.message);
-  }
-  return null;
-}
+var CURRENT_NEWS = FALLBACK_NEWS;
 
 // Globaler State fuer News (wird beim App-Start befuellt)
 var CURRENT_NEWS = FALLBACK_NEWS;
@@ -611,23 +603,7 @@ const NewsCard = ({ item }) => {
 };
 
 const AktuellView = ({ filter, searchTerm }) => {
-  const [news, setNews] = useState(CURRENT_NEWS);
-  const [isLive, setIsLive] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(function() {
-    setLoading(true);
-    fetchLiveNews().then(function(liveNews) {
-      if (liveNews) {
-        CURRENT_NEWS = liveNews;
-        setNews(liveNews);
-        setIsLive(true);
-      }
-      setLoading(false);
-    });
-  }, []);
-
-  const filtered = news.filter(function(n) {
+  const filtered = CURRENT_NEWS.filter(function(n) {
     return (filter === "all" || n.category === filter) &&
     (!searchTerm || n.title.toLowerCase().includes(searchTerm.toLowerCase()) || (n.summary && n.summary.toLowerCase().includes(searchTerm.toLowerCase())))
   });
@@ -637,18 +613,13 @@ const AktuellView = ({ filter, searchTerm }) => {
       <div style={{
         display: "flex", alignItems: "center", gap: 8, marginBottom: 12,
         padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-        background: isLive ? "#f0fff4" : "#fffaf0",
-        color: isLive ? "#2f855a" : "#c69c2e",
-        border: isLive ? "1px solid #c6f6d5" : "1px solid #feebc8",
+        background: "#f0f7ff", color: "#2b6cb0", border: "1px solid #bee3f8",
       }}>
-        <span style={{ fontSize: 14 }}>{loading ? "⏳" : isLive ? "🟢" : "📋"}</span>
-        {loading ? "Lade aktuelle Nachrichten aus dem Internet..." :
-         isLive ? "Live-Daten geladen – aktuell aus dem Netz" :
-         "Gespeicherte Daten – Live-Update nicht verfügbar"}
+        <span style={{ fontSize: 14 }}>📰</span>
+        {CURRENT_NEWS.length} Nachrichten · Stand: 06. März 2026
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
-        {loading ? <LoadingDots /> :
-         filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 40, color: COLORS.textMuted }}>
             Keine Nachrichten in dieser Kategorie gefunden.
           </div>
