@@ -21,21 +21,10 @@ function apiRequest(apiKey, body) {
       res.on("end", function() { resolve(data); });
     });
     req.on("error", function(e) { reject(e); });
+    req.setTimeout(9000, function() { req.destroy(); reject(new Error("Timeout")); });
     req.write(postData);
     req.end();
   });
-}
-
-async function callClaude(apiKey, messages, tools) {
-  var body = {
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 4096,
-    messages: messages,
-  };
-  if (tools) body.tools = tools;
-
-  var raw = await apiRequest(apiKey, body);
-  return JSON.parse(raw);
 }
 
 exports.handler = async function(event, context) {
@@ -49,71 +38,28 @@ exports.handler = async function(event, context) {
     return { statusCode: 500, headers: headers, body: JSON.stringify({ error: "API Key fehlt" }) };
   }
 
+  var today = new Date().toISOString().split("T")[0];
+
   try {
-    var messages = [{
-      role: "user",
-      content: "Suche aktuelle Nachrichten aus Bruehl (Baden) 68782 bei Mannheim. Suche auf bruehl-baden.de, Schwetzinger Zeitung, ffw-bruehl.de und lokalen Quellen. Gib am Ende NUR ein JSON-Array mit 8-12 Nachrichten zurueck im Format: [{\"id\":1, \"title\":\"Titel\", \"date\":\"YYYY-MM-DD\", \"source\":\"gemeinde\", \"category\":\"politik\", \"summary\":\"Zusammenfassung\", \"url\":\"https://...\"}]. Kategorien: politik, kultur, umwelt, feuerwehr, sport, wirtschaft, verkehr, bildung. Quellen: gemeinde, feuerwehr, schwetzinger, presseportal. WICHTIG: Am Ende NUR das JSON-Array ausgeben!"
-    }];
+    var raw = await apiRequest(apiKey, {
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 2000,
+      system: "Du bist ein Nachrichten-Generator fuer die Gemeinde Bruehl (Baden), PLZ 68782, Rhein-Neckar-Kreis. Heute ist " + today + ". Erstelle basierend auf deinem Wissen ueber Bruehl (Baden) aktuelle und realistische Nachrichten. Antworte NUR mit einem JSON-Array, ohne Markdown, ohne Erklaerungen.",
+      messages: [{
+        role: "user",
+        content: "Erstelle 10 aktuelle Nachrichten-Eintraege fuer Bruehl (Baden) 68782. Nutze dein Wissen ueber die Gemeinde, den Gemeinderat, die Feuerwehr, Vereine (FV 1918, TV Bruehl), Schulen (Schillerschule), Freibad, Veranstaltungen und lokale Themen. Mische verschiedene Quellen und Kategorien. Datumsangaben sollen aktuell sein (rund um " + today + "). Format als JSON-Array: [{\"id\":1, \"title\":\"...\", \"date\":\"YYYY-MM-DD\", \"source\":\"gemeinde|feuerwehr|schwetzinger|presseportal\", \"category\":\"politik|kultur|umwelt|feuerwehr|sport|wirtschaft|verkehr|bildung\", \"summary\":\"2-3 Saetze.\", \"url\":\"https://www.bruehl-baden.de/\"}]. NUR JSON!"
+      }],
+    });
 
-    var tools = [{ type: "web_search_20250305", name: "web_search" }];
-    var finalText = "";
-    var maxRounds = 8;
-
-    for (var round = 0; round < maxRounds; round++) {
-      var data = await callClaude(apiKey, messages, tools);
-
-      if (!data.content) break;
-
-      var textParts = "";
-      var toolUseBlocks = [];
-
+    var data = JSON.parse(raw);
+    var text = "";
+    if (data.content) {
       for (var i = 0; i < data.content.length; i++) {
-        if (data.content[i].type === "text" && data.content[i].text) {
-          textParts += data.content[i].text;
-        }
-        if (data.content[i].type === "tool_use") {
-          toolUseBlocks.push(data.content[i]);
+        if (data.content[i].type === "text") {
+          text += data.content[i].text;
         }
       }
-
-      finalText += textParts;
-
-      if (data.stop_reason === "end_turn" || toolUseBlocks.length === 0) {
-        break;
-      }
-
-      messages.push({ role: "assistant", content: data.content });
-
-      var toolResults = [];
-      for (var t = 0; t < toolUseBlocks.length; t++) {
-        toolResults.push({
-          type: "tool_result",
-          tool_use_id: toolUseBlocks[t].id,
-          content: "OK",
-        });
-      }
-      messages.push({ role: "user", content: toolResults });
     }
 
-    var cleaned = finalText.replace(/```json\n?|```/g, "").trim();
-    var match = cleaned.match(/\[[\s\S]*\]/);
-    if (match) {
-      var news = JSON.parse(match[0]);
-      for (var j = 0; j < news.length; j++) { news[j].id = j + 1; }
-      return {
-        statusCode: 200, headers: headers,
-        body: JSON.stringify({ news: news, timestamp: new Date().toISOString() }),
-      };
-    }
-
-    return {
-      statusCode: 200, headers: headers,
-      body: JSON.stringify({ news: null, debug: "Kein JSON-Array gefunden", textLength: finalText.length, sample: finalText.substring(0, 500) }),
-    };
-  } catch (err) {
-    return {
-      statusCode: 500, headers: headers,
-      body: JSON.stringify({ error: err.message }),
-    };
-  }
-};
+    var cleaned = text.replace(/```json\n?|```/g, "").trim();
+    var match = cleaned.match
