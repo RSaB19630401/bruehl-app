@@ -20,7 +20,7 @@ function apiRequest(apiKey, body) {
       res.on("data", function(chunk) { data += chunk; });
       res.on("end", function() {
         try { resolve(JSON.parse(data)); }
-        catch(e) { reject(new Error("JSON parse error: " + data.substring(0, 200))); }
+        catch(e) { reject(new Error("Parse error: " + data.substring(0, 300))); }
       });
     });
     req.on("error", function(e) { reject(e); });
@@ -42,34 +42,64 @@ exports.handler = async function(event, context) {
 
   var apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return {
-      statusCode: 500, headers: headers,
-      body: JSON.stringify({ error: "API Key nicht konfiguriert" }),
-    };
+    return { statusCode: 500, headers: headers, body: JSON.stringify({ error: "API Key fehlt" }) };
   }
 
   try {
-    var data = await apiRequest(apiKey, {
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 2000,
-      tools: [{ type: "web_search_20250305", name: "web_search" }],
-      system: "Du bist ein Nachrichten-Aggregator fuer Bruehl (Baden), PLZ 68782. Suche aktuelle Nachrichten und gib sie als reines JSON-Array zurueck. KEIN Markdown, KEINE Erklaerungen, NUR das JSON-Array.",
-      messages: [{
-        role: "user",
-        content: "Suche die neuesten Nachrichten und Meldungen aus Bruehl (Baden) 68782. Durchsuche: bruehl-baden.de, Schwetzinger Zeitung, ffw-bruehl.de. Gib ein JSON-Array mit 8-12 Eintraegen: [{\"id\":1, \"title\":\"...\", \"date\":\"YYYY-MM-DD\", \"source\":\"gemeinde|feuerwehr|schwetzinger|presseportal\", \"category\":\"politik|kultur|umwelt|feuerwehr|sport|wirtschaft|verkehr|bildung\", \"summary\":\"2-3 Saetze\", \"url\":\"https://...\"}]. NUR reines JSON!"
-      }],
-    });
+    var messages = [{
+      role: "user",
+      content: "Suche die neuesten Nachrichten aus Bruehl (Baden) 68782. Durchsuche bruehl-baden.de, Schwetzinger Zeitung Bruehl, ffw-bruehl.de. Gib ein JSON-Array mit 8-12 Eintraegen: [{\"id\":1, \"title\":\"...\", \"date\":\"YYYY-MM-DD\", \"source\":\"gemeinde|feuerwehr|schwetzinger|presseportal\", \"category\":\"politik|kultur|umwelt|feuerwehr|sport|wirtschaft|verkehr|bildung\", \"summary\":\"2-3 Saetze\", \"url\":\"https://...\"}]. NUR reines JSON!"
+    }];
 
-    var text = "";
-    if (data.content) {
+    var body = {
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4096,
+      tools: [{ type: "web_search_20250305", name: "web_search" }],
+      system: "Du bist ein Nachrichten-Aggregator fuer Bruehl (Baden), PLZ 68782. Suche aktuelle Nachrichten per Web-Suche und gib am Ende NUR ein reines JSON-Array zurueck.",
+      messages: messages,
+    };
+
+    var maxRounds = 5;
+    var finalText = "";
+
+    for (var round = 0; round < maxRounds; round++) {
+      var data = await apiRequest(apiKey, body);
+
+      if (!data.content) break;
+
+      var assistantContent = [];
+      var toolUseBlocks = [];
+
       for (var i = 0; i < data.content.length; i++) {
-        if (data.content[i].type === "text") {
-          text += data.content[i].text;
+        var block = data.content[i];
+        assistantContent.push(block);
+        if (block.type === "text" && block.text) {
+          finalText += block.text;
+        }
+        if (block.type === "tool_use") {
+          toolUseBlocks.push(block);
         }
       }
+
+      if (data.stop_reason === "end_turn" || toolUseBlocks.length === 0) {
+        break;
+      }
+
+      messages.push({ role: "assistant", content: assistantContent });
+
+      var toolResults = [];
+      for (var t = 0; t < toolUseBlocks.length; t++) {
+        toolResults.push({
+          type: "tool_result",
+          tool_use_id: toolUseBlocks[t].id,
+          content: "Ergebnisse verarbeitet. Bitte fahre fort.",
+        });
+      }
+      messages.push({ role: "user", content: toolResults });
+      body.messages = messages;
     }
 
-    var cleaned = text.replace(/```json\n?|```/g, "").trim();
+    var cleaned = finalText.replace(/```json\n?|```/g, "").trim();
     var match = cleaned.match(/\[[\s\S]*\]/);
     if (match) {
       var news = JSON.parse(match[0]);
@@ -82,7 +112,7 @@ exports.handler = async function(event, context) {
 
     return {
       statusCode: 200, headers: headers,
-      body: JSON.stringify({ news: null, error: "Keine Nachrichten", raw: text.substring(0, 300) }),
+      body: JSON.stringify({ news: null, error: "Kein JSON gefunden", raw: finalText.substring(0, 500) }),
     };
   } catch (err) {
     return {
