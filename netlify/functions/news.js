@@ -42,7 +42,7 @@ exports.handler = async function(event, context) {
 
   try {
     var raw = await apiRequest(apiKey, {
-      model: "claude-sonnet-4-20250514",
+      model: "claude-haiku-3-5-20241022",
       max_tokens: 2000,
       system: "Du bist ein Nachrichten-Generator fuer die Gemeinde Bruehl (Baden), PLZ 68782, Rhein-Neckar-Kreis. Heute ist " + today + ". Erstelle basierend auf deinem Wissen ueber Bruehl (Baden) aktuelle und realistische Nachrichten. Antworte NUR mit einem JSON-Array, ohne Markdown, ohne Erklaerungen.",
       messages: [{
