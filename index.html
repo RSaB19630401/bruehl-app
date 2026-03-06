@@ -316,24 +316,59 @@ const HISTORICAL_DATA = {
   ],
 };
 
-// Current news data (would be fetched via Claude API with web search in production)
-const CURRENT_NEWS = [
+// ==========================================
+// LIVE DATEN-LADEN via Claude API + Web Search
+// ==========================================
+
+// Statische Fallback-Daten (werden angezeigt bis Live-Daten geladen sind)
+const FALLBACK_NEWS = [
   { id: 1, title: "Erfassung von Tieren, Pflanzen und Biotopen", date: "2026-02-26", source: "gemeinde", category: "umwelt", summary: "Die Gemeinde Brühl startet eine umfassende Erfassung der lokalen Flora, Fauna und Biotope auf dem Gemeindegebiet.", url: "https://www.bruehl-baden.de/" },
   { id: 2, title: "Ostereierschießen 2026", date: "2026-02-26", source: "gemeinde", category: "kultur", summary: "Das traditionelle Ostereierschießen 2026 wird angekündigt – ein beliebtes Brühler Brauchtumsereignis.", url: "https://www.bruehl-baden.de/" },
   { id: 3, title: "Kommunale Wärmeplanung: Neue Rechtsgrundlage und erste Ergebnisse", date: "2026-02-20", source: "gemeinde", category: "politik", summary: "Die kommunale Wärmeplanung in Brühl schreitet voran. Neue gesetzliche Grundlagen und erste Planungsergebnisse werden vorgestellt.", url: "https://www.bruehl-baden.de/" },
-  { id: 4, title: "Von röhrenden Motoren bis zu stillen Waldwegen", date: "2026-02-19", source: "gemeinde", category: "kultur", summary: "Ein Bericht über die vielfältigen Freizeitmöglichkeiten in und um Brühl – vom Hockenheimring bis zu den Rheinauen.", url: "https://www.bruehl-baden.de/" },
-  { id: 5, title: "BRÜHL MACHT SAUBER", date: "2026-02-10", source: "gemeinde", category: "umwelt", summary: "Die Gemeinde ruft zur großen Putzaktion auf. Bürgerinnen und Bürger sind eingeladen, gemeinsam für ein sauberes Brühl zu sorgen.", url: "https://www.bruehl-baden.de/" },
-  { id: 6, title: "Fahrzeugbrand am Einkaufszentrum", date: "2026-02-12", source: "feuerwehr", category: "feuerwehr", summary: "Ein Fahrzeug geriet auf dem Parkplatz des Einkaufszentrums in der Mannheimer Landstraße in Brand. Ersthelfer konnten den Brand eindämmen, die Feuerwehr löschte endgültig.", url: "https://ffw-bruehl.de/" },
-  { id: 7, title: "Brandmeldeanlage Schillerschule ausgelöst", date: "2026-02-12", source: "feuerwehr", category: "feuerwehr", summary: "Die Brandmeldeanlage an der Schillerschule löste einen Sabotagealarm aus. Der Hausmeister konnte die Situation selbstständig klären.", url: "https://ffw-bruehl.de/" },
-  { id: 8, title: "Brandsicherheitswache bei Fastnacht", date: "2026-02-03", source: "feuerwehr", category: "feuerwehr", summary: "Die Feuerwehr stellte den Brandsicherheitswachdienst bei der Prunksitzung des CV 'Die Rohrhöfer Göggel' und bei der Seniorensitzung.", url: "https://ffw-bruehl.de/" },
-  { id: 9, title: "Erste-Hilfe-Fortbildung der Feuerwehr", date: "2026-01-24", source: "feuerwehr", category: "feuerwehr", summary: "Alle Abteilungen der Feuerwehr Brühl frischten ihre Erste-Hilfe-Kenntnisse auf, unterstützt von Ausbildern des DRK-Ortsvereins.", url: "https://ffw-bruehl.de/" },
-  { id: 10, title: "Öffentliche Ausschreibung: Maler- und Trockenbauarbeiten", date: "2026-02-06", source: "gemeinde", category: "wirtschaft", summary: "Die Gemeinde schreibt Maler-, Putz- und Trockenbauarbeiten nach VOB/A öffentlich aus.", url: "https://www.bruehl-baden.de/" },
-  { id: 11, title: "Kellereinbrüche in Brühl und Rheinau", date: "2026-02-15", source: "presseportal", category: "feuerwehr", summary: "Unbekannte brachen in der Nacht in mehrere Kellerabteile in Brühl ein und entwendeten hochwertige Fahrräder.", url: "https://www.presseportal.de/blaulicht/r/Brühl%20(Baden)" },
-  { id: 12, title: "Glasfaserschaden behoben", date: "2025-12-17", source: "gemeinde", category: "verkehr", summary: "Der Glasfaserschaden wurde erfolgreich repariert. Die Internetversorgung ist wiederhergestellt.", url: "https://www.bruehl-baden.de/" },
-  { id: 13, title: "Vorweihnachtliche Feier für Brühler Dorfälteste", date: "2025-12-11", source: "gemeinde", category: "kultur", summary: "Eine gelungene vorweihnachtliche Feier für die Brühler Dorfälteste fand in der Festhalle statt.", url: "https://www.bruehl-baden.de/" },
-  { id: 14, title: "Leselust und Weingenuss in der Gemeindebücherei", date: "2025-11-20", source: "schwetzinger", category: "kultur", summary: "15 Neuerscheinungen wurden bei der Veranstaltung mit Barbara Hennl-Goll, Luisa Uhrig und Petra Marx vorgestellt.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
-  { id: 15, title: "Candlelight Shopping in Brühl und Rohrhof", date: "2025-11-15", source: "schwetzinger", category: "wirtschaft", summary: "Das beliebte Vorweihnachtsevent des Gewerbevereins mit Sternenverkauf lockte zahlreiche Besucher in die Geschäfte.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
+  { id: 4, title: "BRÜHL MACHT SAUBER", date: "2026-02-10", source: "gemeinde", category: "umwelt", summary: "Die Gemeinde ruft zur großen Putzaktion auf. Bürgerinnen und Bürger sind eingeladen, gemeinsam für ein sauberes Brühl zu sorgen.", url: "https://www.bruehl-baden.de/" },
+  { id: 5, title: "Fahrzeugbrand am Einkaufszentrum", date: "2026-02-12", source: "feuerwehr", category: "feuerwehr", summary: "Ein Fahrzeug geriet auf dem Parkplatz des Einkaufszentrums in der Mannheimer Landstraße in Brand.", url: "https://ffw-bruehl.de/" },
 ];
+
+// Live-Nachrichten laden via Claude API + Web Search
+async function fetchLiveNews() {
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2000,
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        system: "Du bist ein Nachrichten-Aggregator fuer Bruehl (Baden), PLZ 68782. Suche aktuelle Nachrichten und gib sie als JSON-Array zurueck. ANTWORTE NUR mit einem JSON-Array, ohne Markdown-Backticks oder Erklaerungen.",
+        messages: [{
+          role: "user",
+          content: "Suche die neuesten Nachrichten, Meldungen und Veranstaltungen aus Bruehl (Baden) 68782 bei Mannheim. Durchsuche bruehl-baden.de, Schwetzinger Zeitung, ffw-bruehl.de und lokale Quellen. Gib GENAU ein JSON-Array mit 8-12 Eintraegen zurueck, Format: [{\"id\":1, \"title\":\"...\", \"date\":\"YYYY-MM-DD\", \"source\":\"gemeinde|feuerwehr|schwetzinger|presseportal\", \"category\":\"politik|kultur|umwelt|feuerwehr|sport|wirtschaft|verkehr|bildung\", \"summary\":\"2-3 Saetze...\", \"url\":\"https://...\"}]. Sortiere nach Datum absteigend. NUR reines JSON, keine Erklaerungen!"
+        }],
+      }),
+    });
+    const data = await response.json();
+    // Text-Bloecke extrahieren
+    const text = data.content
+      .filter(function(b) { return b.type === "text"; })
+      .map(function(b) { return b.text; })
+      .join("");
+    // JSON parsen
+    var cleaned = text.replace(/```json\n?|```/g, "").trim();
+    // Falls das JSON in Text eingebettet ist, Array extrahieren
+    var match = cleaned.match(/\[[\s\S]*\]/);
+    if (match) cleaned = match[0];
+    var news = JSON.parse(cleaned);
+    if (Array.isArray(news) && news.length > 0) {
+      return news.map(function(n, i) { return Object.assign({}, n, { id: i + 1 }); });
+    }
+  } catch(e) {
+    console.log("Live-Daten konnten nicht geladen werden, nutze Fallback:", e);
+  }
+  return null;
+}
+
+// Globaler State fuer News (wird beim App-Start befuellt)
+var CURRENT_NEWS = FALLBACK_NEWS;
 
 // ==========================================
 // COMPONENTS
@@ -594,20 +629,51 @@ const NewsCard = ({ item }) => {
 };
 
 const AktuellView = ({ filter, searchTerm }) => {
-  const filtered = CURRENT_NEWS.filter(n =>
-    (filter === "all" || n.category === filter) &&
-    (!searchTerm || n.title.toLowerCase().includes(searchTerm.toLowerCase()) || n.summary.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const [news, setNews] = useState(CURRENT_NEWS);
+  const [isLive, setIsLive] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(function() {
+    setLoading(true);
+    fetchLiveNews().then(function(liveNews) {
+      if (liveNews) {
+        CURRENT_NEWS = liveNews;
+        setNews(liveNews);
+        setIsLive(true);
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  const filtered = news.filter(function(n) {
+    return (filter === "all" || n.category === filter) &&
+    (!searchTerm || n.title.toLowerCase().includes(searchTerm.toLowerCase()) || (n.summary && n.summary.toLowerCase().includes(searchTerm.toLowerCase())))
+  });
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
-      {filtered.length === 0 ? (
-        <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 40, color: COLORS.textMuted }}>
-          Keine Nachrichten in dieser Kategorie gefunden.
-        </div>
-      ) : (
-        filtered.map(item => <NewsCard key={item.id} item={item} />)
-      )}
+    <div>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8, marginBottom: 12,
+        padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+        background: isLive ? "#f0fff4" : "#fffaf0",
+        color: isLive ? "#2f855a" : "#c69c2e",
+        border: isLive ? "1px solid #c6f6d5" : "1px solid #feebc8",
+      }}>
+        <span style={{ fontSize: 14 }}>{loading ? "⏳" : isLive ? "🟢" : "📋"}</span>
+        {loading ? "Lade aktuelle Nachrichten aus dem Internet..." :
+         isLive ? "Live-Daten geladen – aktuell aus dem Netz" :
+         "Gespeicherte Daten – Live-Update nicht verfügbar"}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
+        {loading ? <LoadingDots /> :
+         filtered.length === 0 ? (
+          <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 40, color: COLORS.textMuted }}>
+            Keine Nachrichten in dieser Kategorie gefunden.
+          </div>
+        ) : (
+          filtered.map(function(item) { return React.createElement(NewsCard, { key: item.id, item: item }); })
+        )}
+      </div>
     </div>
   );
 };
