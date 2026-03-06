@@ -341,8 +341,21 @@ const FALLBACK_NEWS = [
 
 var CURRENT_NEWS = FALLBACK_NEWS;
 
-// Globaler State fuer News (wird beim App-Start befuellt)
-var CURRENT_NEWS = FALLBACK_NEWS;
+// Live-Nachrichten vom Cloudflare Worker laden
+var WORKER_URL = "https://white-recipe-9a06.rsab1963.workers.dev";
+
+async function fetchLiveNews() {
+  try {
+    var response = await fetch(WORKER_URL);
+    var data = await response.json();
+    if (data.news && Array.isArray(data.news) && data.news.length > 0) {
+      return data.news;
+    }
+  } catch(e) {
+    console.log("Live-Daten nicht verfuegbar:", e.message);
+  }
+  return null;
+}
 
 // ==========================================
 // COMPONENTS
@@ -603,7 +616,22 @@ const NewsCard = ({ item }) => {
 };
 
 const AktuellView = ({ filter, searchTerm }) => {
-  const filtered = CURRENT_NEWS.filter(function(n) {
+  const [news, setNews] = useState(CURRENT_NEWS);
+  const [isLive, setIsLive] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(function() {
+    fetchLiveNews().then(function(liveNews) {
+      if (liveNews) {
+        CURRENT_NEWS = liveNews;
+        setNews(liveNews);
+        setIsLive(true);
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  const filtered = news.filter(function(n) {
     return (filter === "all" || n.category === filter) &&
     (!searchTerm || n.title.toLowerCase().includes(searchTerm.toLowerCase()) || (n.summary && n.summary.toLowerCase().includes(searchTerm.toLowerCase())))
   });
@@ -613,10 +641,14 @@ const AktuellView = ({ filter, searchTerm }) => {
       <div style={{
         display: "flex", alignItems: "center", gap: 8, marginBottom: 12,
         padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-        background: "#f0f7ff", color: "#2b6cb0", border: "1px solid #bee3f8",
+        background: loading ? "#fffaf0" : isLive ? "#f0fff4" : "#f0f7ff",
+        color: loading ? "#c69c2e" : isLive ? "#2f855a" : "#2b6cb0",
+        border: loading ? "1px solid #feebc8" : isLive ? "1px solid #c6f6d5" : "1px solid #bee3f8",
       }}>
-        <span style={{ fontSize: 14 }}>📰</span>
-        {CURRENT_NEWS.length} Nachrichten · Stand: 06. März 2026
+        <span style={{ fontSize: 14 }}>{loading ? "⏳" : isLive ? "🟢" : "📰"}</span>
+        {loading ? "Lade aktuelle Nachrichten..." :
+         isLive ? "Live-Daten geladen – aktuell aus dem Netz" :
+         news.length + " Nachrichten · Gespeicherte Daten"}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
         {filtered.length === 0 ? (
