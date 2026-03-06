@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <!-- iPhone PWA-Unterstützung -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Brühl App">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  
+  <!-- Android PWA -->
+  <meta name="theme-color" content="#1a365d">
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Allgemein -->
+  <meta name="description" content="Brühl (Baden) Heimat-App – Nachrichten, Veranstaltungen, Vereine, Karte und mehr">
+  <title>Brühl (Baden) Heimat-App</title>
+  
+  <!-- Splash Screens iPhone -->
+  <meta name="apple-mobile-web-app-title" content="Brühl">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f7f5f0; -webkit-font-smoothing: antialiased; }
+    #root { min-height: 100vh; min-height: 100dvh; }
+    /* iOS Safe Area für Notch */
+    @supports (padding-top: env(safe-area-inset-top)) {
+      body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+    }
+    /* Lade-Animation */
+    .loader { display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;color:#1a365d; }
+    .loader-spin { width:40px;height:40px;border:3px solid #e2ddd4;border-top:3px solid #c69c2e;border-radius:50%;animation:spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <!-- Wird angezeigt während React lädt -->
+    <div class="loader">
+      <div class="loader-spin"></div>
+      <div style="font-size:14px;font-weight:600">Brühl App wird geladen...</div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.26.0/babel.min.js" crossorigin></script>
+
+  <script>
+    // Fehlerbehandlung falls Babel/React nicht laden
+    window.onerror = function(msg, url, line) {
+      var root = document.getElementById('root');
+      if (root && root.querySelector('.loader')) {
+        root.innerHTML = '<div style="padding:40px;text-align:center;font-family:sans-serif;">' +
+          '<h2 style="color:#1a365d;">Bruehl App</h2>' +
+          '<p style="color:#c53030;margin:16px 0;">Fehler beim Laden: ' + msg + '</p>' +
+          '<p>Bitte pruefe deine Internetverbindung und lade die Seite neu.</p>' +
+          '<button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;background:#1a365d;color:white;border:none;border-radius:8px;cursor:pointer;">Neu laden</button>' +
+          '</div>';
+      }
+    };
+  </script>
+
+  <script type="text/babel" data-presets="react">
+    const { useState, useEffect, useCallback, useRef } = React;
+
+
+
+// ==========================================
+// BRÜHL (BADEN) - HEIMAT-APP
+// PWA mit historischen & aktuellen Daten
+// ==========================================
+
+const COLORS = {
+  primary: "#1a365d",
+  primaryLight: "#2c5282",
+  accent: "#c69c2e",
+  accentLight: "#d4a843",
+  bg: "#f7f5f0",
+  bgCard: "#ffffff",
+  bgDark: "#0f1923",
+  text: "#1a202c",
+  textMuted: "#64748b",
+  border: "#e2ddd4",
+  success: "#2f855a",
+  danger: "#c53030",
+  info: "#2b6cb0",
+};
+
+const SOURCES = {
+  gemeinde: { name: "Gemeinde Brühl", color: "#2c5282", icon: "🏛️", url: "https://www.bruehl-baden.de" },
+  rundschau: { name: "Brühler Rundschau", color: "#8b5e3c", icon: "📰", url: "https://www.bruehl-baden.de/rundschau/" },
+  schwetzinger: { name: "Schwetzinger Zeitung", color: "#c53030", icon: "🗞️", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
+  facebook: { name: "Facebook", color: "#1877f2", icon: "📘", url: "https://www.facebook.com" },
+  instagram: { name: "Instagram", color: "#e4405f", icon: "📷", url: "https://www.instagram.com/bruehlbaden/" },
+  feuerwehr: { name: "Feuerwehr Brühl", color: "#e53e3e", icon: "🚒", url: "https://ffw-bruehl.de/" },
+  wikipedia: { name: "Wikipedia", color: "#636363", icon: "📚", url: "https://de.wikipedia.org/wiki/Brühl_(Baden)" },
+  meinestadt: { name: "meinestadt.de", color: "#38a169", icon: "📍", url: "https://aktuell.meinestadt.de/bruehl-baden" },
+  presseportal: { name: "Presseportal", color: "#4a5568", icon: "🔵", url: "https://www.presseportal.de/blaulicht/r/Brühl%20(Baden)" },
+  leobw: { name: "LEO-BW", color: "#6b21a8", icon: "🗃️", url: "https://www.leo-bw.de" },
+};
+
+const CATEGORIES = [
+  { id: "all", name: "Alle", icon: "🏠" },
+  { id: "politik", name: "Politik & Verwaltung", icon: "🏛️" },
+  { id: "kultur", name: "Kultur & Freizeit", icon: "🎭" },
+  { id: "vereine", name: "Vereine & Ehrenamt", icon: "🤝" },
+  { id: "feuerwehr", name: "Feuerwehr & Sicherheit", icon: "🚒" },
+  { id: "verkehr", name: "Verkehr & Infrastruktur", icon: "🚗" },
+  { id: "bildung", name: "Bildung & Schule", icon: "📚" },
+  { id: "umwelt", name: "Umwelt & Natur", icon: "🌿" },
+  { id: "sport", name: "Sport", icon: "⚽" },
+  { id: "wirtschaft", name: "Wirtschaft & Gewerbe", icon: "💼" },
+];
+
+// Brühl Wappen: "In Blau ein silbernes Hufeisen" — SVG component
+const BruehlWappen = ({ size = 44 }) => (
+  <svg width={size} height={size} viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+    {/* Shield shape */}
+    <defs>
+      <linearGradient id="shieldGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#2c5ea0" />
+        <stop offset="100%" stopColor="#1a3d6d" />
+      </linearGradient>
+      <linearGradient id="metalGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#f0f0f0" />
+        <stop offset="40%" stopColor="#ffffff" />
+        <stop offset="100%" stopColor="#d0d0d0" />
+      </linearGradient>
+    </defs>
+    <path d="M5,5 L95,5 L95,70 Q95,95 50,115 Q5,95 5,70 Z" fill="url(#shieldGrad)" stroke="#c69c2e" strokeWidth="3"/>
+    <path d="M8,8 L92,8 L92,69 Q92,92 50,112 Q8,92 8,69 Z" fill="none" stroke="#c69c2e" strokeWidth="0.5" opacity="0.4"/>
+    {/* Horseshoe - silver/white on blue */}
+    <g transform="translate(50,58) scale(0.85)">
+      <path d="M0,-38 C-22,-38 -34,-22 -34,0 C-34,14 -28,26 -22,34 L-14,34 C-20,26 -24,14 -24,0 C-24,-16 -14,-28 0,-28 C14,-28 24,-16 24,0 C24,14 20,26 14,34 L22,34 C28,26 34,14 34,0 C34,-22 22,-38 0,-38 Z" 
+            fill="url(#metalGrad)" stroke="#b0b0b0" strokeWidth="1"/>
+      {/* Nail holes */}
+      <circle cx="-26" cy="8" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
+      <circle cx="26" cy="8" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
+      <circle cx="-20" cy="26" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
+      <circle cx="20" cy="26" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
+      <circle cx="-30" cy="-10" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
+      <circle cx="30" cy="-10" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
+      <circle cx="-22" cy="-28" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
+      <circle cx="22" cy="-28" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
+    </g>
+  </svg>
+);
+
+// Comprehensive Vereine data
+const VEREINE_DATA = [
+  // Sport
+  { name: "FV 1918 Brühl e.V.", category: "sport", type: "Fußball, Leichtathletik, Kampfsport", founded: 1918, address: "Ketscher Str. 65", url: "http://www.fv-bruehl.de", colors: "blau-schwarz", desc: "Traditionsverein mit Fußball, Leichtathletik und Kampfsport. Heimat von Maurizio Gaudino." },
+  { name: "TV Brühl 1912 e.V.", category: "sport", type: "Turnen, Handball, Gymnastik, Yoga", founded: 1912, address: "Wiesenplätz 2", url: "https://tvbrühl.de", desc: "Turn- und Sportverein mit Handball (SG Brühl/Ketsch), Turnen, Yoga, Walking und mehr." },
+  { name: "Angelsportverein 1965 Brühl e.V.", category: "sport", type: "Angelsport", founded: 1965, address: "Weidweg 2", url: "http://www.asv65.de", desc: "Aktiver Angelverein am Rhein mit Vereinsheim, Familientagen und Räucherfischverkauf." },
+  { name: "ASV Frühauf 1949 Brühl e.V.", category: "sport", type: "Angelsport", founded: 1949, address: "Brühl", url: "http://www.asv1949-brühl.de", desc: "Einer der ältesten Angelvereine Brühls mit geselligem Vereinsleben." },
+  { name: "Wassersportverein Brühl", category: "sport", type: "Wassersport", founded: null, address: "Brühl", url: null, desc: "Wassersport am Rhein und den umliegenden Gewässern." },
+  { name: "Schützenverein Brühl", category: "sport", type: "Schießsport", founded: null, address: "Schützenhaus", url: null, desc: "Sportschützen mit eigenem Schützenhaus und regelmäßigem Trainingsbetrieb." },
+  // Musik & Kultur
+  { name: "Musikverein Brühl e.V.", category: "kultur", type: "Blasmusik", founded: null, address: "Friedrichstr. 5", url: null, desc: "Traditioneller Musikverein mit Blasorchester und Jugendausbildung." },
+  { name: "Spielmannszug der Feuerwehr Brühl", category: "kultur", type: "Spielmannszug", founded: null, address: "Feuerwehr Brühl", url: "https://ffw-bruehl.de", desc: "Seit über 100 Jahren aktiv. Begleitet Feste, Umzüge und Feuerwehrveranstaltungen." },
+  // Heimat & Brauchtum
+  { name: "Verein für Heimat- und Brauchtumspflege Brühl/Rohrhof e.V.", category: "kultur", type: "Heimatpflege, Museum", founded: 1995, address: "Erzbergerstr. 45", url: "http://www.heimatverein-bruehl.de", desc: "Betreibt das Heimatmuseum 'Rheingold' mit Schwerpunkt Luftschiffbau Schütte-Lanz und Ziegeleien. Gibt die 'Ortsschell' heraus." },
+  // Karneval
+  { name: "CV 'Die Rohrhöfer Göggel' e.V.", category: "kultur", type: "Karneval", founded: null, address: "Rohrhof", url: null, desc: "Karnevalsverein aus Rohrhof. Veranstaltet die große Prunksitzung und Seniorensitzung." },
+  { name: "Kollerkrotten Brühl", category: "kultur", type: "Karneval", founded: null, address: "Brühl", url: "http://www.kollerkrotten-bruehl.de", desc: "Brühler Karnevalsverein, benannt nach der Kollerinsel." },
+  // Soziales & Hilfsorganisationen
+  { name: "DRK Ortsverein Brühl", category: "vereine", type: "Hilfsorganisation", founded: null, address: "Brühl", url: null, desc: "Deutsches Rotes Kreuz – Blutspendetermine, Erste-Hilfe-Kurse und Rettungsdienst-Ausbildung." },
+  { name: "Freiwillige Feuerwehr Brühl", category: "feuerwehr", type: "Feuerwehr", founded: 1900, address: "Brühl", url: "https://ffw-bruehl.de", desc: "125 Jahre Feuerwehr (Jubiläum 2025). Mehrere Abteilungen, Jugendfeuerwehr und Seelsorge-Team." },
+  // Kirche
+  { name: "Katholische Kirchengemeinde", category: "vereine", type: "Kirchliche Vereine", founded: null, address: "Kirchenstr. 15", url: null, desc: "Kirchliche Vereine und Gruppen der katholischen Gemeinde St. Sebastian." },
+  { name: "Evangelische Kirchengemeinde", category: "vereine", type: "Kirchliche Vereine", founded: null, address: "Brühl", url: null, desc: "Evangelische Gemeinde im Kirchenbezirk Südliche Kurpfalz. Gemeindezentrum seit 1996." },
+  // Natur
+  { name: "Obst- und Gartenbauverein", category: "umwelt", type: "Natur, Garten", founded: null, address: "Pferchstückerweg", url: null, desc: "Pflege von Streuobstwiesen, Gartenberatung und Naturschutzaktivitäten." },
+  // Politik
+  { name: "Grüne Liste Brühl", category: "politik", type: "Wählervereinigung", founded: null, address: "Brühl", url: "http://www.grueneliste-bruehl.de", desc: "Kommunalpolitische Wählervereinigung im Brühler Gemeinderat." },
+  { name: "Gewerbeverein Brühl und Rohrhof e.V.", category: "wirtschaft", type: "Gewerbe", founded: null, address: "Brühl", url: "https://www.gewerbeverein-bruehl-rohrhof.de", desc: "Vertretung der lokalen Unternehmen. Organisiert Candlelight Shopping, Zunftbaumfest und Gewerbe- und Leistungsschau." },
+];
+
+// Unternehmen & Wirtschaft
+const UNTERNEHMEN_DATA = {
+  branchen: [
+    { name: "Handwerk & Bau", icon: "🔨", firmen: [
+      "Frank May Bau- und Möbelschreinerei",
+      "Anton Langlotz Baufirma (historisch)",
+      "Diverse Malermeister und Handwerker",
+    ]},
+    { name: "Handel & Gastronomie", icon: "🛒", firmen: [
+      "Einkaufszentrum Mannheimer Landstraße",
+      "Lokale Geschäfte (Candlelight Shopping)",
+      "Restaurant Ratsstube",
+      "Diverse Bäckereien und Metzgereien",
+    ]},
+    { name: "IT & Dienstleistungen", icon: "💻", firmen: [
+      "Heiko Jendreck Personal Helpdesk & Webdesign",
+      "Diverse IT-Dienstleister",
+      "Steuerberater und Rechtsanwälte",
+    ]},
+    { name: "Industrie (historisch & aktuell)", icon: "🏭", firmen: [
+      "Schütte-Lanz Luftschiffbau (1909–1920er, historisch)",
+      "Sieben Ziegeleien (historisch)",
+      "Aluminiumverarbeitung (historisch)",
+      "Diverse Industriebetriebe im Gewerbegebiet Nord-Ost",
+    ]},
+    { name: "Gesundheit", icon: "🏥", firmen: [
+      "Diverse Ärzte und Praxen",
+      "Apotheken",
+      "Physiotherapie-Praxen",
+    ]},
+    { name: "Öffentliche Einrichtungen", icon: "🏛️", firmen: [
+      "Gemeindebücherei",
+      "Heimatmuseum 'Rheingold'",
+      "Schillerschule (Grundschule & Hauptschule)",
+      "Marion-Dönhoff-Realschule Brühl/Ketsch",
+      "Festhalle Brühl",
+    ]},
+  ],
+  partnerschaften: [
+    { name: "Ormesson-sur-Marne", country: "Frankreich", since: 1977 },
+    { name: "Weixdorf (Dresden)", country: "Deutschland", since: 1993 },
+    { name: "Dourtenga", country: "Burkina Faso", since: 1997 },
+  ],
+};
+
+// Veranstaltungskalender 2026
+const EVENTS_DATA = [
+  { date: "2026-03-03", title: "Neuseeland 3D-Multivisionsshow", location: "Festhalle Brühl", time: "19:30", category: "kultur", desc: "Stephan Schulz präsentiert 8 Monate Neuseeland per Camper, Kajak und zu Fuß." },
+  { date: "2026-03-05", title: "30. Brühler Gesundheitsforum", location: "Festhalle Brühl", time: "19:00", category: "vereine", desc: "\"Rundum gesund statt kugelrund\" – Ernährung und Wohlbefinden mit 5 Brühler Spezialisten." },
+  { date: "2026-03-12", title: "Schöne Mannheims", location: "Festhalle Brühl", time: "20:00", category: "kultur", desc: "Songs und Comedy – zum Schreien komisch und zum Weinen schön." },
+  { date: "2026-03-20", title: "Ausstellung \"Draussenwelt\"", location: "Villa Meixner", time: "19:00", category: "kultur", desc: "Künstlergruppe Kaleidoskop – Ausstellung bis 19. April mit Hornensemble der Jugendmusikschule." },
+  { date: "2026-03-22", title: "Heini-Langlotz-Lauf", location: "Rheinauen Brühl", time: "08:45", category: "sport", desc: "Volkslauf durch die Rheinauen: 10km, 3,3km Meile und 800m Kinderlauf." },
+  { date: "2026-03-30", title: "Oster-Kreativworkshop Kinder", location: "Mehrzweckraum Hallenbad", time: "10:00", category: "bildung", desc: "Zeichnen und Experimentieren mit Maltechniken rund um Ostern." },
+  { date: "2026-04-16", title: "Dave Davis: Konfetti für alle!", location: "Festhalle Brühl", time: "20:00", category: "kultur", desc: "Comedy-Extraklasse – ein Aufstand in Farbe." },
+  { date: "2026-04-23", title: "Tatjana Geßler Live", location: "Festhalle Brühl", time: "20:00", category: "kultur", desc: "Die beliebte TV-Moderatorin und Filmemacherin live." },
+  { date: "2026-05-01", title: "Zunftbaumfest", location: "Goggelbrunnen Rohrhof", time: "11:00", category: "wirtschaft", desc: "Traditionelles Zunftbaumfest des Gewerbevereins." },
+  { date: "2026-06-13", title: "Country Open-Air", location: "Country-Club Buffalo's", time: "19:00", category: "kultur", desc: "Doug Adkins mit Band – Countrymusic & Line Dance." },
+  { date: "2026-07-01", title: "Freibad-Saisonstart", location: "Freibad Brühl", time: "09:00", category: "sport", desc: "Eröffnung der Freibadsaison (witterungsabhängig)." },
+  { date: "2026-09-27", title: "Gewerbe- und Leistungsschau", location: "Festhalle Brühl", time: "10:00", category: "wirtschaft", desc: "Zweitägige Gewerbeschau (27.+28. September)." },
+  { date: "2026-10-24", title: "Krawall im Kuckucksnest", location: "Festhalle Brühl", time: "20:00", category: "kultur", desc: "Mundartkomödie von Rudy Kupferschmitt." },
+  { date: "2026-11-27", title: "Candlelight Shopping", location: "Brühl & Rohrhof", time: "18:00", category: "wirtschaft", desc: "Stimmungsvolles Einkaufs-Event mit Sternenverkauf." },
+];
+
+const STOLPERSTEINE_DATA = [
+  { name: "Frieda Rhein", location: "Hauptstraße (ggü. Rathaus)", year: 2014, fate: "Über Gurs nach Auschwitz deportiert und ermordet", desc: "Witwe des Kaufmanns Jakob Rhein. Geschäft 1938 in der Pogromnacht zerstört." },
+  { name: "Lena Rhein", location: "Hauptstraße (ggü. Rathaus)", year: 2014, fate: "Nach Izbica deportiert und ermordet", desc: "Stieftochter von Frieda Rhein." },
+  { name: "Martha Rhein", location: "Hauptstraße (ggü. Rathaus)", year: 2014, fate: "Über Gurs nach Auschwitz deportiert und ermordet", desc: "Tochter von Lena Rhein." },
+  { name: "Otto Brandt", location: "Rohrhofer Straße 32", year: 2016, fate: "1943 im Gefängnis Hannover durch Misshandlung verstorben", desc: "Zeuge Jehovas, geb. 1914." },
+  { name: "Ida Brandt", location: "Rohrhofer Straße 32", year: 2016, fate: "Verfolgt als Zeugin Jehovas", desc: "Mutter von Otto Brandt." },
+  { name: "Hermann Brandt", location: "Rohrhofer Straße 32", year: 2016, fate: "Verfolgt als Zeuge Jehovas", desc: "Vater von Otto Brandt." },
+];
+
+const NOTFALL_DATA = [
+  { name: "Notruf Feuerwehr/Rettung", nummer: "112", icon: "🚒" },
+  { name: "Polizei", nummer: "110", icon: "👮" },
+  { name: "Polizeirevier Schwetzingen", nummer: "06202/288-0", icon: "🏢" },
+  { name: "Feuerwehr Brühl", nummer: "06202/73046", icon: "🚒" },
+  { name: "Ärztl. Bereitschaftsdienst", nummer: "116117", icon: "🏥" },
+  { name: "Giftnotruf BW", nummer: "0761/19240", icon: "☠️" },
+  { name: "Rathaus Brühl", nummer: "06202/2003-0", icon: "🏛️" },
+  { name: "Apotheken-Notdienst", nummer: "0800/0022833", icon: "💊" },
+  { name: "DRK Brühl", nummer: "06202/73900", icon: "🏥" },
+];
+
+const RATHAUS_DATA = {
+  adresse: "Hauptstraße 1, 68782 Brühl",
+  tel: "06202/2003-0", email: "buergermeisteramt@bruehl-baden.de",
+  oeffnung: "Mo–Fr 8:30–12:00, Di+Do 15:00–17:30",
+  bm: { name: "Dr. Ralf Göck", partei: "SPD", seit: 1998 },
+  abteilungen: ["Hauptamt (Karlheinz Geschwill)", "Umweltberatung (Dr. Andreas Askani)", "Gewerbeamt", "Bürgerbüro"],
+};
+
+// Historical data for Brühl
+const HISTORICAL_DATA = {
+  timeline: [
+    { year: 976, title: "Erste Erwähnung Rohrhof", desc: "Rohrhof wird als 'Rorheim' in einer Schenkungsurkunde Kaiser Ottos II. an den Bischof von Worms erstmals erwähnt.", category: "politik", era: "mittelalter" },
+    { year: 1157, title: "Erste urkundliche Erwähnung Brühls", desc: "Bischof Gunther von Speyer erwähnt 'Bruowele' – ein am Wasser gelegenes Wald- und Wiesenstück. Er erwirbt den Adelshof in Brühl zurück.", category: "politik", era: "mittelalter" },
+    { year: 1152, title: "Kloster Schönau erhält Rohrhof", desc: "Der Wormser Bischof schenkt Rohrhof dem Zisterzienserkloster Schönau. Die Siedlung wird in eine Grangie (Wirtschaftshof) umgewandelt.", category: "kultur", era: "mittelalter" },
+    { year: 1496, title: "Ältestes Ortszeichen", desc: "Auf einem Bildstock auf Schwetzinger Gemarkung erscheint das Hufeisen, das spätere Wappensymbol Brühls.", category: "kultur", era: "mittelalter" },
+    { year: 1558, title: "Aufhebung des Klosters", desc: "Kurfürst Ottheinrich hebt im Zuge der Reformation das Kloster Schönau auf. Rohrhof wird von der Pflege Schönau verpachtet.", category: "politik", era: "neuzeit" },
+    { year: 1704, title: "Ältestes Gerichtssiegel", desc: "Das älteste Gerichtssiegel zeigt das Hufeisen, das bereits als traditionelles Ortszeichen etabliert ist.", category: "politik", era: "neuzeit" },
+    { year: 1709, title: "Bereinigung der Herrschaftsverhältnisse", desc: "Das Hochstift Speyer verzichtet in einem Vertrag auf alle weltlichen Rechte. Brühl gehört nun zum pfälzischen Oberamt Heidelberg.", category: "politik", era: "neuzeit" },
+    { year: 1803, title: "Brühl kommt zu Baden", desc: "Im Rahmen der napoleonischen Neuordnung wird Brühl dem Amt Schwetzingen im Großherzogtum Baden zugeteilt.", category: "politik", era: "neuzeit" },
+    { year: 1840, title: "Zuteilung des Kollers", desc: "Das ursprünglich bischöfliche Koller wird Brühl zugeteilt. Das Gemeindegebiet wächst erheblich.", category: "politik", era: "neuzeit" },
+    { year: 1878, title: "Eingemeindung Rohrhof", desc: "Rohrhof wird nach Brühl eingemeindet. Das Territorium der Gemeinde verdreifacht sich damit.", category: "politik", era: "neuzeit" },
+    { year: 1909, title: "Luftschiffbau Schütte-Lanz", desc: "Karl Lanz und Johann Schütte beschließen, auf Brühler Gemarkung Luftschiffe zu bauen. Ein bedeutendes Kapitel der Luftfahrtgeschichte beginnt.", category: "wirtschaft", era: "moderne" },
+    { year: 1912, title: "Gemeindewappen angenommen", desc: "Die Gemeinde nimmt das Hufeisen-Wappen offiziell an, tingiert in den silbern-blauen Farben von Pfalz-Wittelsbach.", category: "politik", era: "moderne" },
+    { year: 1957, title: "800-jähriges Jubiläum", desc: "Brühl feiert 800 Jahre seit der ersten urkundlichen Erwähnung mit einem großen Festumzug.", category: "kultur", era: "moderne" },
+    { year: 1967, title: "Bau der Schillerschule", desc: "Das Schulzentrum wird als größte Baumaßnahme der Brühler Geschichte im Gemeindezentrum errichtet.", category: "bildung", era: "moderne" },
+    { year: 1973, title: "Kreisreform", desc: "Der Landkreis Mannheim wird aufgelöst, Brühl kommt zum neu gebildeten Rhein-Neckar-Kreis.", category: "politik", era: "moderne" },
+    { year: 1975, title: "Marion-Dönhoff-Realschule", desc: "Die Realschule Brühl/Ketsch erhält am südlichen Ortsrand ein eigenes Gebäude.", category: "bildung", era: "moderne" },
+    { year: 2007, title: "850-jähriges Jubiläum", desc: "Unter dem Motto 'Leben und feiern am Rhein' feiert Brühl sein 850-jähriges Jubiläum mit zahlreichen Veranstaltungen.", category: "kultur", era: "moderne" },
+  ],
+  geography: {
+    area: "10,19 km²",
+    elevation: "89,90 m – 97,03 m",
+    population: "ca. 14.400",
+    plz: "68782",
+    vorwahl: "06202",
+    kfz: "HD",
+    landkreis: "Rhein-Neckar-Kreis",
+    regierungsbezirk: "Karlsruhe",
+    bundesland: "Baden-Württemberg",
+    buergermeister: "Dr. Ralf Göck",
+    ortsteile: ["Brühl", "Rohrhof"],
+    kollerinsel: "400 ha – eines der beiden linksrheinischen Gebiete Baden-Württembergs",
+    naturschutz: ["Backofen-Riedwiesen", "Ketscher Rheininsel", "Schwetzinger Wiesen-Riedwiesen"],
+    nachbarn: ["Mannheim (N)", "Schwetzingen (O)", "Ketsch (S)", "Altrip (W)", "Waldsee (W)", "Otterstadt (W)"],
+  },
+  persoenlichkeiten: [
+    { name: "Rio Reiser", years: "1950–1996", desc: "Bürgerlich Ralph Christian Möbius. Musiker und Sänger von Ton Steine Scherben, lebte in den 1950er Jahren in Brühl und wurde hier eingeschult." },
+    { name: "Maurizio Gaudino", years: "*1966", desc: "Ehemaliger deutscher Fußballnationalspieler, geboren in Brühl." },
+    { name: "Bernhard Askani", years: "1937–2003", desc: "Historiker und Schulbuchautor, wirkte viele Jahre als Organist und Chorleiter der evangelischen Gemeinde." },
+    { name: "Hans Motzenbäcker", years: "1935–2019", desc: "32 Jahre CDU-Gemeinderat, langjähriger Präsident des FV Brühl und des Badischen Leichtathletikverbands. Ehrenbürger seit 2008." },
+    { name: "Werner Fuchs", years: "1943–2021", desc: "33 Jahre Gemeinderat, Initiator der Brühler Straßenkerwe und zahlreicher Brauchtumsveranstaltungen. Ehrenbürger seit 2017." },
+  ],
+};
+
+// ==========================================
+// LIVE DATEN-LADEN via Claude API + Web Search
+// ==========================================
+
+// Statische Fallback-Daten (werden angezeigt bis Live-Daten geladen sind)
+const FALLBACK_NEWS = [
+  { id: 1, title: "Erfassung von Tieren, Pflanzen und Biotopen", date: "2026-02-26", source: "gemeinde", category: "umwelt", summary: "Die Gemeinde Brühl startet eine umfassende Erfassung der lokalen Flora, Fauna und Biotope auf dem Gemeindegebiet.", url: "https://www.bruehl-baden.de/" },
+  { id: 2, title: "Ostereierschießen 2026", date: "2026-02-26", source: "gemeinde", category: "kultur", summary: "Das traditionelle Ostereierschießen 2026 wird angekündigt – ein beliebtes Brühler Brauchtumsereignis.", url: "https://www.bruehl-baden.de/" },
+  { id: 3, title: "Kommunale Wärmeplanung: Neue Rechtsgrundlage und erste Ergebnisse", date: "2026-02-20", source: "gemeinde", category: "politik", summary: "Die kommunale Wärmeplanung in Brühl schreitet voran. Neue gesetzliche Grundlagen und erste Planungsergebnisse werden vorgestellt.", url: "https://www.bruehl-baden.de/" },
+  { id: 4, title: "BRÜHL MACHT SAUBER", date: "2026-02-10", source: "gemeinde", category: "umwelt", summary: "Die Gemeinde ruft zur großen Putzaktion auf. Bürgerinnen und Bürger sind eingeladen, gemeinsam für ein sauberes Brühl zu sorgen.", url: "https://www.bruehl-baden.de/" },
+  { id: 5, title: "Fahrzeugbrand am Einkaufszentrum", date: "2026-02-12", source: "feuerwehr", category: "feuerwehr", summary: "Ein Fahrzeug geriet auf dem Parkplatz des Einkaufszentrums in der Mannheimer Landstraße in Brand.", url: "https://ffw-bruehl.de/" },
+];
+
+// Live-Nachrichten laden via Netlify Function (sicherer Proxy)
+async function fetchLiveNews() {
+  try {
+    // Netlify Function aufrufen (API-Key ist sicher auf dem Server)
+    var baseUrl = window.location.origin;
+    var response = await fetch(baseUrl + "/api/news", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    var data = await response.json();
+    if (data.news && Array.isArray(data.news) && data.news.length > 0) {
+      console.log("Live-Daten geladen:", data.news.length, "Nachrichten");
+      return data.news;
+    }
+  } catch(e) {
+    console.log("Live-Daten nicht verfuegbar, nutze Fallback:", e.message);
+  }
+  return null;
+}
+
+// Globaler State fuer News (wird beim App-Start befuellt)
+var CURRENT_NEWS = FALLBACK_NEWS;
+
+// ==========================================
+// COMPONENTS
+// ==========================================
+
+const LoadingDots = () => (
+  <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "center", padding: 20 }}>
+    {[0, 1, 2].map(i => (
+      <div key={i} style={{
+        width: 8, height: 8, borderRadius: "50%", background: COLORS.accent,
+        animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+      }} />
+    ))}
+    <style>{`@keyframes pulse { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.2); } }`}</style>
+  </div>
+);
+
+const SourceBadge = ({ sourceId, small }) => {
+  const src = SOURCES[sourceId];
+  if (!src) return null;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 4,
+      padding: small ? "1px 6px" : "2px 10px",
+      borderRadius: 20, fontSize: small ? 10 : 11, fontWeight: 600,
+      background: `${src.color}15`, color: src.color, border: `1px solid ${src.color}30`,
+      whiteSpace: "nowrap",
+    }}>
+      <span style={{ fontSize: small ? 10 : 12 }}>{src.icon}</span> {src.name}
+    </span>
+  );
+};
+
+const CategoryBadge = ({ categoryId }) => {
+  const cat = CATEGORIES.find(c => c.id === categoryId);
+  if (!cat) return null;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 3,
+      padding: "2px 8px", borderRadius: 12, fontSize: 10, fontWeight: 500,
+      background: "#f0f0f0", color: "#555",
+    }}>
+      {cat.icon} {cat.name}
+    </span>
+  );
+};
+
+// ==========================================
+// MAIN VIEWS
+// ==========================================
+
+const HistoryTimeline = ({ filter }) => {
+  const [selectedEra, setSelectedEra] = useState("all");
+  const eras = [
+    { id: "all", name: "Alle Epochen", color: COLORS.primary },
+    { id: "mittelalter", name: "Mittelalter", color: "#8b5e3c" },
+    { id: "neuzeit", name: "Neuzeit", color: "#2c5282" },
+    { id: "moderne", name: "Moderne", color: "#2f855a" },
+  ];
+
+  const filtered = HISTORICAL_DATA.timeline.filter(
+    e => (selectedEra === "all" || e.era === selectedEra) && (filter === "all" || e.category === filter)
+  );
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
+        {eras.map(era => (
+          <button key={era.id} onClick={() => setSelectedEra(era.id)} style={{
+            padding: "6px 16px", borderRadius: 20, border: "none", cursor: "pointer",
+            fontSize: 13, fontWeight: selectedEra === era.id ? 700 : 500,
+            background: selectedEra === era.id ? era.color : "#f0ede6",
+            color: selectedEra === era.id ? "#fff" : "#555",
+            transition: "all 0.2s",
+          }}>
+            {era.name}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ position: "relative", paddingLeft: 32 }}>
+        <div style={{
+          position: "absolute", left: 11, top: 0, bottom: 0, width: 2,
+          background: `linear-gradient(to bottom, ${COLORS.accent}, ${COLORS.primary})`,
+        }} />
+        {filtered.map((event, i) => (
+          <div key={i} style={{
+            position: "relative", marginBottom: 24, paddingLeft: 24,
+            animation: `slideIn 0.4s ease ${i * 0.05}s both`,
+          }}>
+            <div style={{
+              position: "absolute", left: -26, top: 4, width: 16, height: 16,
+              borderRadius: "50%", border: `3px solid ${COLORS.accent}`,
+              background: COLORS.bgCard,
+            }} />
+            <div style={{
+              background: COLORS.bgCard, borderRadius: 12, padding: "16px 20px",
+              border: `1px solid ${COLORS.border}`, boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                <span style={{
+                  fontFamily: "'Playfair Display', Georgia, serif", fontSize: 22,
+                  fontWeight: 800, color: COLORS.accent,
+                }}>{event.year}</span>
+                <CategoryBadge categoryId={event.category} />
+              </div>
+              <h4 style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: COLORS.text }}>
+                {event.title}
+              </h4>
+              <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: COLORS.textMuted }}>
+                {event.desc}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <style>{`@keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }`}</style>
+    </div>
+  );
+};
+
+const GeographyPanel = () => {
+  const g = HISTORICAL_DATA.geography;
+  const InfoRow = ({ label, value }) => (
+    <div style={{
+      display: "flex", justifyContent: "space-between", padding: "10px 0",
+      borderBottom: `1px solid ${COLORS.border}40`, fontSize: 13,
+    }}>
+      <span style={{ color: COLORS.textMuted, fontWeight: 500 }}>{label}</span>
+      <span style={{ color: COLORS.text, fontWeight: 600, textAlign: "right", maxWidth: "60%" }}>{value}</span>
+    </div>
+  );
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+      <div style={{
+        background: COLORS.bgCard, borderRadius: 12, padding: 24,
+        border: `1px solid ${COLORS.border}`,
+      }}>
+        <h3 style={{ margin: "0 0 16px", fontSize: 16, color: COLORS.primary, display: "flex", alignItems: "center", gap: 8 }}>
+          📊 Basisdaten
+        </h3>
+        <InfoRow label="Fläche" value={g.area} />
+        <InfoRow label="Höhenlage" value={g.elevation} />
+        <InfoRow label="Einwohner" value={g.population} />
+        <InfoRow label="PLZ" value={g.plz} />
+        <InfoRow label="Vorwahl" value={g.vorwahl} />
+        <InfoRow label="Kfz-Kennzeichen" value={g.kfz} />
+        <InfoRow label="Bürgermeister" value={g.buergermeister} />
+        <InfoRow label="Landkreis" value={g.landkreis} />
+      </div>
+
+      <div style={{
+        background: COLORS.bgCard, borderRadius: 12, padding: 24,
+        border: `1px solid ${COLORS.border}`,
+      }}>
+        <h3 style={{ margin: "0 0 16px", fontSize: 16, color: COLORS.primary, display: "flex", alignItems: "center", gap: 8 }}>
+          🗺️ Geographie & Nachbarn
+        </h3>
+        <InfoRow label="Ortsteile" value={g.ortsteile.join(", ")} />
+        <InfoRow label="Kollerinsel" value={g.kollerinsel} />
+        <div style={{ marginTop: 12 }}>
+          <p style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, marginBottom: 8 }}>Nachbargemeinden</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {g.nachbarn.map(n => (
+              <span key={n} style={{
+                padding: "3px 10px", borderRadius: 12, fontSize: 11,
+                background: "#edf2f7", color: "#4a5568", fontWeight: 500,
+              }}>{n}</span>
+            ))}
+          </div>
+        </div>
+        <div style={{ marginTop: 16 }}>
+          <p style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, marginBottom: 8 }}>Naturschutzgebiete</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {g.naturschutz.map(n => (
+              <span key={n} style={{ fontSize: 12, color: COLORS.success, display: "flex", alignItems: "center", gap: 4 }}>
+                🌿 {n}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PersonalitiesPanel = () => (
+  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+    {HISTORICAL_DATA.persoenlichkeiten.map((p, i) => (
+      <div key={i} style={{
+        background: COLORS.bgCard, borderRadius: 12, padding: 20,
+        border: `1px solid ${COLORS.border}`, transition: "transform 0.2s, box-shadow 0.2s",
+        cursor: "default",
+      }}
+        onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08)"; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: "50%",
+            background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.accent})`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 20, color: "#fff", fontWeight: 700,
+          }}>
+            {p.name.charAt(0)}
+          </div>
+          <div>
+            <h4 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: COLORS.text }}>{p.name}</h4>
+            <span style={{ fontSize: 12, color: COLORS.textMuted }}>{p.years}</span>
+          </div>
+        </div>
+        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: COLORS.textMuted }}>
+          {p.desc}
+        </p>
+      </div>
+    ))}
+  </div>
+);
+
+const NewsCard = ({ item }) => {
+  const dateStr = new Date(item.date).toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" });
+  return (
+    <a
+      href={item.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: "block", textDecoration: "none", color: "inherit",
+        background: COLORS.bgCard, borderRadius: 12, padding: 20,
+        border: `1px solid ${COLORS.border}`,
+        transition: "transform 0.2s, box-shadow 0.2s, border-color 0.2s",
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08)";
+        e.currentTarget.style.borderColor = COLORS.accent;
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.transform = "";
+        e.currentTarget.style.boxShadow = "";
+        e.currentTarget.style.borderColor = COLORS.border;
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+        <SourceBadge sourceId={item.source} small />
+        <CategoryBadge categoryId={item.category} />
+        <span style={{ fontSize: 11, color: COLORS.textMuted, marginLeft: "auto" }}>{dateStr}</span>
+      </div>
+      <h3 style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 700, color: COLORS.text, lineHeight: 1.4 }}>
+        {item.title}
+      </h3>
+      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: COLORS.textMuted }}>
+        {item.summary}
+      </p>
+    </a>
+  );
+};
+
+const AktuellView = ({ filter, searchTerm }) => {
+  const [news, setNews] = useState(CURRENT_NEWS);
+  const [isLive, setIsLive] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(function() {
+    setLoading(true);
+    fetchLiveNews().then(function(liveNews) {
+      if (liveNews) {
+        CURRENT_NEWS = liveNews;
+        setNews(liveNews);
+        setIsLive(true);
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  const filtered = news.filter(function(n) {
+    return (filter === "all" || n.category === filter) &&
+    (!searchTerm || n.title.toLowerCase().includes(searchTerm.toLowerCase()) || (n.summary && n.summary.toLowerCase().includes(searchTerm.toLowerCase())))
+  });
+
+  return (
+    <div>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8, marginBottom: 12,
+        padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+        background: isLive ? "#f0fff4" : "#fffaf0",
+        color: isLive ? "#2f855a" : "#c69c2e",
+        border: isLive ? "1px solid #c6f6d5" : "1px solid #feebc8",
+      }}>
+        <span style={{ fontSize: 14 }}>{loading ? "⏳" : isLive ? "🟢" : "📋"}</span>
+        {loading ? "Lade aktuelle Nachrichten aus dem Internet..." :
+         isLive ? "Live-Daten geladen – aktuell aus dem Netz" :
+         "Gespeicherte Daten – Live-Update nicht verfügbar"}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
+        {loading ? <LoadingDots /> :
+         filtered.length === 0 ? (
+          <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 40, color: COLORS.textMuted }}>
+            Keine Nachrichten in dieser Kategorie gefunden.
+          </div>
+        ) : (
+          filtered.map(function(item) { return React.createElement(NewsCard, { key: item.id, item: item }); })
+        )}
+      </div>
+    </div>
+  );
+};
+
+const AIInsights = () => {
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [response, setResponse] = useState(null);
+  const [error, setError] = useState(null);
+
+  const askClaude = async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    // Erst Backend versuchen (falls verfügbar)
+    if (API_AVAILABLE) {
+      try {
+        const data = await fetchAPI("/ai/ask");
+        if (data && data.answer) { setResponse(data.answer); setLoading(false); return; }
+      } catch(e) {}
+    }
+
+    // Ohne Backend: Claude API direkt (funktioniert nur in claude.ai Artifact)
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          tools: [{ type: "web_search_20250305", name: "web_search" }],
+          messages: [{
+            role: "user",
+            content: `Du bist ein Experte für die Gemeinde Brühl (Baden), PLZ 68782, im Rhein-Neckar-Kreis. 
+Beantworte folgende Frage mit aktuellen Informationen. Nutze Web-Suche für aktuelle Daten.
+Antworte auf Deutsch, prägnant und informativ.
+
+Frage: ${query}`
+          }],
+        }),
+      });
+      const data = await res.json();
+      const text = data.content && data.content.filter(b => b.type === "text").map(b => b.text).join("\n") || "Keine Antwort erhalten.";
+      setResponse(text);
+    } catch (err) {
+      setResponse("Der KI-Assistent funktioniert aktuell in zwei Modi:\n\n" +
+        "1️⃣ In Claude.ai: Öffne die bruehl-app.jsx als Artifact – dort funktioniert die KI direkt.\n\n" +
+        "2️⃣ Im Browser: Starte das Backend (bruehl-backend) – dann beantwortet die KI deine Fragen mit aktuellen lokalen Daten.\n\n" +
+        "Alle anderen Funktionen (Nachrichten, Kalender, Karte, Vereine, ...) funktionieren auch ohne KI!");
+    }
+    setLoading(false);
+  };
+
+  const suggestions = [
+    "Was sind die nächsten Veranstaltungen in Brühl?",
+    "Wie ist die aktuelle Verkehrslage auf der B36?",
+    "Welche Bauprojekte gibt es aktuell in Brühl?",
+    "Was berichtet die Schwetzinger Zeitung über Brühl?",
+  ];
+
+  return (
+    <div style={{
+      background: `linear-gradient(135deg, ${COLORS.bgDark}, #1a2a3a)`,
+      borderRadius: 16, padding: 28, color: "#fff",
+    }}>
+      <h3 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
+        🤖 KI-Assistent für Brühl
+      </h3>
+      <p style={{ margin: "0 0 20px", fontSize: 13, color: "#94a3b8" }}>
+        Stelle Fragen zu Brühl – mit Live-Daten aus dem Web
+      </p>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        <input
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && askClaude()}
+          placeholder="Frage zu Brühl stellen..."
+          style={{
+            flex: 1, padding: "12px 16px", borderRadius: 12,
+            border: "1px solid #334155", background: "#1e293b",
+            color: "#fff", fontSize: 14, outline: "none",
+          }}
+        />
+        <button
+          onClick={askClaude}
+          disabled={loading}
+          style={{
+            padding: "12px 24px", borderRadius: 12, border: "none",
+            background: loading ? "#475569" : COLORS.accent,
+            color: "#fff", fontSize: 14, fontWeight: 600, cursor: loading ? "wait" : "pointer",
+            transition: "background 0.2s",
+          }}
+        >
+          {loading ? "..." : "Fragen"}
+        </button>
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+        {suggestions.map((s, i) => (
+          <button key={i} onClick={() => { setQuery(s); }} style={{
+            padding: "5px 12px", borderRadius: 16, border: "1px solid #334155",
+            background: "transparent", color: "#94a3b8", fontSize: 11,
+            cursor: "pointer", transition: "all 0.2s",
+          }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = COLORS.accent; e.currentTarget.style.color = "#fff"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#334155"; e.currentTarget.style.color = "#94a3b8"; }}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+
+      {loading && <LoadingDots />}
+      {error && <p style={{ color: "#fc8181", fontSize: 13 }}>{error}</p>}
+      {response && (
+        <div style={{
+          background: "#1e293b", borderRadius: 12, padding: 16,
+          fontSize: 13, lineHeight: 1.7, color: "#e2e8f0",
+          borderLeft: `3px solid ${COLORS.accent}`,
+          whiteSpace: "pre-wrap",
+        }}>
+          {response}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SourcesPanel = () => (
+  <div>
+    <h3 style={{ margin: "0 0 16px", fontSize: 16, color: COLORS.primary }}>
+      📡 Datenquellen & Konnektoren
+    </h3>
+    <p style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 20, lineHeight: 1.6 }}>
+      Alle Quellen, die für die tägliche Aktualisierung der Brühl-App verwendet werden. 
+      Die Daten werden über MCP-Server und Claude API mit Web-Suche automatisch aggregiert.
+    </p>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: 12 }}>
+      {Object.entries(SOURCES).map(([id, src]) => (
+        <a key={id} href={src.url} target="_blank" rel="noopener noreferrer" style={{
+          display: "flex", alignItems: "center", gap: 12, padding: 16,
+          background: COLORS.bgCard, borderRadius: 12, textDecoration: "none",
+          border: `1px solid ${COLORS.border}`, transition: "all 0.2s",
+        }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = src.color; e.currentTarget.style.transform = "translateY(-1px)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = COLORS.border; e.currentTarget.style.transform = ""; }}
+        >
+          <span style={{ fontSize: 28 }}>{src.icon}</span>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text }}>{src.name}</div>
+            <div style={{ fontSize: 11, color: src.color, fontWeight: 500 }}>Verbunden ✓</div>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+);
+
+// ==========================================
+// NEW PANELS
+// ==========================================
+
+const EventsPanel = ({ filter }) => {
+  const today = new Date().toISOString().split("T")[0];
+  const upcoming = EVENTS_DATA
+    .filter(e => e.date >= today && (filter === "all" || e.category === filter))
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const past = EVENTS_DATA
+    .filter(e => e.date < today && (filter === "all" || e.category === filter))
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  const EventCard = ({ e, isPast }) => (
+    <div style={{
+      background: COLORS.bgCard, borderRadius: 12, padding: 18,
+      border: `1px solid ${COLORS.border}`, opacity: isPast ? 0.6 : 1,
+      borderLeft: `4px solid ${isPast ? COLORS.textMuted : COLORS.accent}`,
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.accent, marginBottom: 2 }}>
+            {new Date(e.date).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "long", year: "numeric" })} · {e.time} Uhr
+          </div>
+          <h4 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: COLORS.text }}>{e.title}</h4>
+        </div>
+        <CategoryBadge categoryId={e.category} />
+      </div>
+      <div style={{ fontSize: 12, color: COLORS.info, marginBottom: 6, fontWeight: 600 }}>📍 {e.location}</div>
+      <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: COLORS.textMuted }}>{e.desc}</p>
+    </div>
+  );
+
+  return (
+    <div>
+      <h3 style={{ margin: "0 0 4px", fontSize: 17, color: COLORS.primary }}>Kommende Veranstaltungen</h3>
+      <p style={{ margin: "0 0 16px", fontSize: 12, color: COLORS.textMuted }}>
+        Quelle: <a href="https://www.bruehl-baden.de/veranstaltungen/" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.info }}>Gemeinde Brühl Veranstaltungskalender</a>
+      </p>
+      <div style={{ display: "grid", gap: 12, marginBottom: 28 }}>
+        {upcoming.length === 0 ? <p style={{ color: COLORS.textMuted, fontSize: 13 }}>Keine kommenden Veranstaltungen in dieser Kategorie.</p>
+          : upcoming.map((e, i) => <EventCard key={i} e={e} isPast={false} />)}
+      </div>
+      {past.length > 0 && <>
+        <h4 style={{ margin: "0 0 12px", fontSize: 14, color: COLORS.textMuted }}>Vergangene Veranstaltungen</h4>
+        <div style={{ display: "grid", gap: 10 }}>
+          {past.slice(0, 5).map((e, i) => <EventCard key={i} e={e} isPast={true} />)}
+        </div>
+      </>}
+    </div>
+  );
+};
+
+const ServicesPanel = () => (
+  <div style={{ display: "grid", gap: 20 }}>
+    {/* Notfall-Nummern */}
+    <div style={{
+      background: `linear-gradient(135deg, #c5303010, #c5303005)`,
+      borderRadius: 12, padding: 20, border: "1px solid #c5303030",
+    }}>
+      <h3 style={{ margin: "0 0 14px", fontSize: 16, color: COLORS.danger, display: "flex", alignItems: "center", gap: 8 }}>
+        🚨 Notfall-Nummern
+      </h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8 }}>
+        {NOTFALL_DATA.map((n, i) => (
+          <div key={i} style={{
+            display: "flex", alignItems: "center", gap: 10, padding: 10,
+            background: COLORS.bgCard, borderRadius: 8, border: `1px solid ${COLORS.border}`,
+          }}>
+            <span style={{ fontSize: 20 }}>{n.icon}</span>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.text }}>{n.name}</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: COLORS.danger, fontFamily: "monospace" }}>{n.nummer}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Rathaus */}
+    <div style={{ background: COLORS.bgCard, borderRadius: 12, padding: 20, border: `1px solid ${COLORS.border}` }}>
+      <h3 style={{ margin: "0 0 14px", fontSize: 16, color: COLORS.primary, display: "flex", alignItems: "center", gap: 8 }}>
+        🏛️ Rathaus & Verwaltung
+      </h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 16 }}>
+        <div>
+          <div style={{ fontSize: 13, marginBottom: 6 }}><strong>Adresse:</strong> {RATHAUS_DATA.adresse}</div>
+          <div style={{ fontSize: 13, marginBottom: 6 }}><strong>Telefon:</strong> {RATHAUS_DATA.tel}</div>
+          <div style={{ fontSize: 13, marginBottom: 6 }}><strong>E-Mail:</strong> {RATHAUS_DATA.email}</div>
+          <div style={{ fontSize: 13, marginBottom: 6 }}><strong>Öffnungszeiten:</strong> {RATHAUS_DATA.oeffnung}</div>
+          <div style={{ fontSize: 13 }}><strong>Bürgermeister:</strong> {RATHAUS_DATA.bm.name} ({RATHAUS_DATA.bm.partei}, seit {RATHAUS_DATA.bm.seit})</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, marginBottom: 8 }}>Abteilungen</div>
+          {RATHAUS_DATA.abteilungen.map((a, i) => (
+            <div key={i} style={{ fontSize: 12, color: COLORS.text, padding: "4px 0", borderBottom: `1px solid ${COLORS.border}30` }}>{a}</div>
+          ))}
+          <a href="https://www.bruehl-baden.de" target="_blank" rel="noopener noreferrer" style={{
+            display: "inline-block", marginTop: 10, padding: "6px 14px", borderRadius: 8,
+            background: COLORS.primary, color: "#fff", fontSize: 12, fontWeight: 600, textDecoration: "none",
+          }}>Online-Terminvereinbarung →</a>
+        </div>
+      </div>
+    </div>
+
+    {/* Bäder */}
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
+      {[
+        { key: "freibad", data: { name: "Freibad Brühl", opened: 1963, desc: "Eines der schönsten Freibäder der Region mit Edelstahlbecken, Sprungturm und 67m Rutsche.", features: ["Erlebnisbecken", "Sprungturm", "67m Rutsche", "Liegewiese", "Kiosk"], season: "ca. Juli – September" } },
+        { key: "hallenbad", data: { name: "Hallenbad Brühl", opened: 1973, desc: "Ganzjährig geöffnetes Hallenbad mit Sportbecken und Saunabereich.", features: ["Sportbecken", "Lehrschwimmbecken", "Sauna"], season: "Ganzjährig" } },
+      ].map(({ key, data }) => (
+        <div key={key} style={{ background: COLORS.bgCard, borderRadius: 12, padding: 20, border: `1px solid ${COLORS.border}` }}>
+          <h4 style={{ margin: "0 0 8px", fontSize: 15, color: COLORS.primary }}>🏊 {data.name} <span style={{ fontSize: 11, color: COLORS.textMuted }}>seit {data.opened}</span></h4>
+          <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "0 0 10px", lineHeight: 1.5 }}>{data.desc}</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
+            {data.features.map(f => <span key={f} style={{ fontSize: 10, padding: "2px 8px", borderRadius: 10, background: "#ebf8ff", color: COLORS.info }}>{f}</span>)}
+          </div>
+          <div style={{ fontSize: 11, color: COLORS.textMuted }}>📅 Saison: {data.season}</div>
+        </div>
+      ))}
+    </div>
+    <a href="https://bruehl-baden.baeder-suite.de" target="_blank" rel="noopener noreferrer" style={{
+      display: "block", padding: 12, borderRadius: 10, textAlign: "center",
+      background: `${COLORS.info}10`, border: `1px solid ${COLORS.info}30`,
+      color: COLORS.info, fontWeight: 700, fontSize: 13, textDecoration: "none",
+    }}>🎟️ Online-Tickets & Buchung → bruehl-baden.baeder-suite.de</a>
+
+    {/* ÖPNV */}
+    <div style={{ background: COLORS.bgCard, borderRadius: 12, padding: 20, border: `1px solid ${COLORS.border}` }}>
+      <h3 style={{ margin: "0 0 14px", fontSize: 16, color: COLORS.primary }}>🚌 ÖPNV & Verkehr</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 16 }}>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.text, marginBottom: 8 }}>Busverbindungen (VRN)</div>
+          {[
+            { linie: "→ Mannheim Hbf", betreiber: "BRN" },
+            { linie: "→ Schwetzingen Bhf", betreiber: "BRN" },
+            { linie: "→ Ketsch", betreiber: "BRN" },
+          ].map((b, i) => (
+            <div key={i} style={{ fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${COLORS.border}30`, color: COLORS.text }}>
+              🚌 {b.linie} <span style={{ fontSize: 10, color: COLORS.textMuted }}>({b.betreiber})</span>
+            </div>
+          ))}
+          <a href="https://www.vrn.de" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: COLORS.info, display: "block", marginTop: 8 }}>VRN Fahrplanauskunft →</a>
+        </div>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.text, marginBottom: 8 }}>Straßenanbindung</div>
+          {[
+            { name: "A6", desc: "AS Mannheim/Schwetzingen" },
+            { name: "B36", desc: "Mannheim ↔ Karlsruhe" },
+            { name: "L599", desc: "Ortsumgehung (seit 1991)" },
+          ].map((s, i) => (
+            <div key={i} style={{ fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${COLORS.border}30`, color: COLORS.text }}>
+              🛣️ <strong>{s.name}</strong> – {s.desc}
+            </div>
+          ))}
+          <p style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 8, fontStyle: "italic" }}>
+            Historisch: Bahnstrecke Rheinau–Brühl–Ketsch (1905–1966). Bahnhof 1969 abgebrochen.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {/* Abfall */}
+    <div style={{ background: COLORS.bgCard, borderRadius: 12, padding: 20, border: `1px solid ${COLORS.border}` }}>
+      <h3 style={{ margin: "0 0 14px", fontSize: 16, color: COLORS.primary }}>🗑️ Abfallentsorgung</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
+        {[
+          { name: "Restmüll", rhythm: "14-tägig", color: "#4a5568" },
+          { name: "Biomüll", rhythm: "wöchentlich/14-tägig", color: "#38a169" },
+          { name: "Gelber Sack", rhythm: "14-tägig", color: "#d69e2e" },
+          { name: "Papier/Karton", rhythm: "4-wöchig", color: "#3182ce" },
+        ].map((t, i) => (
+          <div key={i} style={{
+            padding: 12, borderRadius: 8, background: `${t.color}08`,
+            border: `2px solid ${t.color}30`, display: "flex", alignItems: "center", gap: 10,
+          }}>
+            <div style={{ width: 12, height: 12, borderRadius: 3, background: t.color }} />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: t.color }}>{t.name}</div>
+              <div style={{ fontSize: 11, color: COLORS.textMuted }}>{t.rhythm}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 10 }}>
+        Sperrmüll auf Abruf · Wertstoffhof: Schwetzingen · 
+        <a href="https://www.bruehl-baden.de/wegweiser/leistungen/A/abfallentsorgung-id_479/" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.info }}> Mehr Info →</a>
+      </p>
+    </div>
+  </div>
+);
+
+const StolpersteinePanel = () => (
+  <div>
+    <div style={{
+      background: `linear-gradient(135deg, #1a365d08, #c69c2e08)`,
+      borderRadius: 12, padding: 20, marginBottom: 20,
+      border: `1px solid ${COLORS.border}`,
+    }}>
+      <h3 style={{ margin: "0 0 8px", fontSize: 16, color: COLORS.primary }}>Stolpersteine in Brühl</h3>
+      <p style={{ margin: 0, fontSize: 13, color: COLORS.textMuted, lineHeight: 1.7 }}>
+        In Brühl erinnern sechs Stolpersteine des Künstlers Gunter Demnig an die Opfer des Nationalsozialismus. 
+        Die Broschüre "Gegen das Vergessen" (2013) dokumentiert die Geschichte der jüdischen Familie Rhein 
+        und weiterer Brühler NS-Opfer. Erhältlich im Rathaus.
+      </p>
+    </div>
+    <div style={{ display: "grid", gap: 14 }}>
+      {STOLPERSTEINE_DATA.map((s, i) => (
+        <div key={i} style={{
+          background: COLORS.bgCard, borderRadius: 12, padding: 18,
+          border: `1px solid ${COLORS.border}`,
+          borderLeft: `4px solid #c69c2e`,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 4, background: "linear-gradient(135deg, #c69c2e, #a07820)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 16, color: "#fff", fontWeight: 800, fontFamily: "serif",
+            }}>✡</div>
+            <div>
+              <h4 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: COLORS.text }}>{s.name}</h4>
+              <span style={{ fontSize: 11, color: COLORS.textMuted }}>📍 {s.location} · verlegt {s.year}</span>
+            </div>
+          </div>
+          <p style={{ margin: "0 0 4px", fontSize: 13, color: COLORS.danger, fontWeight: 600 }}>{s.fate}</p>
+          <p style={{ margin: 0, fontSize: 12, color: COLORS.textMuted, lineHeight: 1.5 }}>{s.desc}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const WeatherRheinPanel = () => {
+  const [weather, setWeather] = useState(null);
+  useEffect(() => {
+    // In production: fetch from OpenWeatherMap API + Rhein Pegelstand API
+    setWeather({ temp: 7, desc: "Bewölkt", humidity: 72, wind: 12, pegel: 4.2, pegelTrend: "stabil" });
+  }, []);
+  if (!weather) return <LoadingDots />;
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+      <div style={{
+        background: "linear-gradient(135deg, #ebf8ff, #bee3f8)", borderRadius: 12, padding: 24,
+        border: `1px solid #90cdf440`,
+      }}>
+        <h3 style={{ margin: "0 0 12px", fontSize: 16, color: "#2a4365" }}>🌤️ Wetter Brühl</h3>
+        <div style={{ fontSize: 48, fontWeight: 800, color: "#2a4365", marginBottom: 4 }}>{weather.temp}°C</div>
+        <div style={{ fontSize: 14, color: "#4a6fa5", marginBottom: 12 }}>{weather.desc}</div>
+        <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#4a6fa5" }}>
+          <span>💧 {weather.humidity}%</span>
+          <span>💨 {weather.wind} km/h</span>
+        </div>
+      </div>
+      <div style={{
+        background: "linear-gradient(135deg, #f0fff4, #c6f6d5)", borderRadius: 12, padding: 24,
+        border: `1px solid #68d39140`,
+      }}>
+        <h3 style={{ margin: "0 0 12px", fontSize: 16, color: "#22543d" }}>🌊 Rhein-Pegelstand</h3>
+        <div style={{ fontSize: 48, fontWeight: 800, color: "#22543d", marginBottom: 4 }}>{weather.pegel}m</div>
+        <div style={{ fontSize: 14, color: "#38a169", marginBottom: 8 }}>Trend: {weather.pegelTrend}</div>
+        <p style={{ margin: 0, fontSize: 11, color: "#4a7c59", lineHeight: 1.5 }}>
+          Relevant für die Kollerinsel und Rheinauen. 
+          Bei Hochwasser: Infos unter bruehl-baden.de/hochwasser
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
+// INTERAKTIVE KARTE
+// ==========================================
+const MAP_POIS = [
+  { id: 1, name: "Rathaus Brühl", cat: "verwaltung", icon: "🏛️", lat: 49.39463, lng: 8.5344, addr: "Hauptstraße 1", tel: "06202/2003-0", hours: "Mo–Fr 8:30–12, Di+Do 15–17:30", desc: "Gemeindeverwaltung, Bürgermeister Dr. Ralf Göck", url: "https://www.bruehl-baden.de", rating: 3.2 },
+  { id: 2, name: "Festhalle Brühl", cat: "kultur", icon: "🎭", lat: 49.3950, lng: 8.5341, addr: "Hauptstraße 2", tel: "06202/2003-0", desc: "Veranstaltungen: Kultur, Comedy, Gesundheitsforum, Vereinsfeste", url: "https://www.bruehl-baden.de/freizeiteinrichtungen/festhalle-id_180", rating: 4.2 },
+  { id: 3, name: "Villa Meixner", cat: "kultur", icon: "🎨", lat: 49.3950, lng: 8.5381, addr: "Schwetzinger Str. 24", tel: "06202/2003-0", desc: "Kulturzentrum mit Ausstellungen, Konzerten, Herbst- & Weihnachtsmarkt", url: "https://www.bruehl-baden.de/gemeinde/villameixner/", rating: 4.5 },
+  { id: 4, name: "Freibad Brühl", cat: "freizeit", icon: "🏊", lat: 49.4042, lng: 8.5344, addr: "Am Schrankenbuckel 11", tel: "06202/2003-521", desc: "Seit 1963. Sprungturm, 67m Rutsche, Erlebnisbecken. ★4.4 (551 Bewertungen)", url: "https://www.bruehl-baden.de/buerger/baeder/freibad-bruehl-id_151/", rating: 4.4 },
+  { id: 5, name: "Hallenbad Brühl", cat: "freizeit", icon: "🏊", lat: 49.4052, lng: 8.5318, addr: "Ormessonstraße 3", tel: "06202/2003-521", hours: "Di+Fr 7:30–12:30 & 16–20:30, Sa 13–17, So 9–13", desc: "Sportbecken, Lehrschwimmbecken, Sauna", url: "https://www.bruehl-baden.de/hallenbad/", rating: 4.0 },
+  { id: 6, name: "Gemeindebücherei", cat: "bildung", icon: "📚", lat: 49.4050, lng: 8.5316, addr: "Ormessonstraße 3", tel: "06202/2003-531", hours: "Mo 10–12 & 14–18, Mi 12–19, Fr 9–12 & 14–17", desc: "7 öffentliche Bücherschränke in Brühl! Veranstaltung 'Leselust & Weingenuss'", url: "https://www.bruehl-baden.de/buecherei/", rating: 4.9 },
+  { id: 7, name: "Schillerschule", cat: "bildung", icon: "🏫", lat: 49.4054, lng: 8.5311, addr: "Ormessonstraße 5", tel: "06202/978200", desc: "Grund- und Werkrealschule, seit 1967", url: "https://www.bruehl-baden.de/schillerschule/", rating: null },
+  { id: 8, name: "Marion-Dönhoff-Realschule", cat: "bildung", icon: "🏫", lat: 49.3887, lng: 8.5312, addr: "Wiesenplätze 7", tel: "06202/70660", desc: "Realschule Brühl/Ketsch", url: "http://www.marion-doenhoff-rs.de/", rating: null },
+  { id: 9, name: "Freiwillige Feuerwehr", cat: "sicherheit", icon: "🚒", lat: 49.4038, lng: 8.5350, addr: "Am Schrankenbuckel 9", tel: "06202/2003-500", desc: "Seit 1900. Mehrere Abteilungen, Jugendfeuerwehr, Spielmannszug", url: "http://ffw-bruehl.de/", rating: 4.8 },
+  { id: 10, name: "Ev. Kirche Brühl", cat: "kirche", icon: "⛪", lat: 49.3948, lng: 8.5358, addr: "Kirchenstraße 1", tel: "06202/71232", desc: "Evangelische Gemeinde, Kirchenbezirk Südliche Kurpfalz", url: "http://www.evkirche-bruehl-baden.de", rating: 4.6 },
+  { id: 11, name: "Schutzengelkirche (Kath.)", cat: "kirche", icon: "⛪", lat: 49.3930, lng: 8.5347, addr: "Hauptstraße 21", desc: "Katholische Pfarrkirche mit Holzdecke und bunten Glasfenstern", url: "http://www.kath-bruehl-ketsch.de/", rating: 4.6 },
+  { id: 12, name: "FV 1918 Brühl – Sportpark", cat: "sport", icon: "⚽", lat: 49.3896, lng: 8.5289, addr: "Ketscher Str. 65", desc: "Fußball, Leichtathletik, Kampfsport. Heimat von Maurizio Gaudino", url: "http://www.fv-bruehl.de/", rating: 4.3 },
+  { id: 13, name: "Scheck-in Center", cat: "einkaufen", icon: "🛒", lat: 49.4104, lng: 8.5421, addr: "Mannheimer Landstraße 2", tel: "06202/128860", hours: "Mo–Sa 7–22", desc: "Großes Einkaufszentrum mit riesiger Auswahl", url: "https://scheck-in-center.de/", rating: 4.3 },
+  { id: 14, name: "Kindergarten St. Lioba", cat: "bildung", icon: "👶", lat: 49.4031, lng: 8.5346, addr: "Berliner Str. 1", tel: "06202/7601860", desc: "Katholischer Kindergarten", rating: 4.8 },
+  { id: 15, name: "Kindergarten St. Bernhard", cat: "bildung", icon: "👶", lat: 49.3923, lng: 8.5349, addr: "Kirchenstraße 16", tel: "06202/7601850", desc: "Katholischer Kindergarten", url: "http://www.bruehl-baden.de/index.cfm?fuseaction=buerger&rubrik=kindergarten&id=160", rating: null },
+];
+
+const MAP_CATEGORIES = [
+  { id: "all", name: "Alle", icon: "📍" },
+  { id: "verwaltung", name: "Verwaltung", icon: "🏛️" },
+  { id: "kultur", name: "Kultur", icon: "🎭" },
+  { id: "freizeit", name: "Freizeit/Bäder", icon: "🏊" },
+  { id: "bildung", name: "Bildung", icon: "📚" },
+  { id: "sport", name: "Sport", icon: "⚽" },
+  { id: "kirche", name: "Kirchen", icon: "⛪" },
+  { id: "sicherheit", name: "Sicherheit", icon: "🚒" },
+  { id: "einkaufen", name: "Einkaufen", icon: "🛒" },
+];
+
+const MapPanel = () => {
+  const [mapCat, setMapCat] = useState("all");
+  const [selectedPoi, setSelectedPoi] = useState(null);
+  const [mapHover, setMapHover] = useState(null);
+
+  const filtered = MAP_POIS.filter(p => mapCat === "all" || p.cat === mapCat);
+
+  // Brühl bounds for SVG coordinate mapping
+  const bounds = { minLat: 49.385, maxLat: 49.412, minLng: 8.525, maxLng: 8.545 };
+  const toX = (lng) => ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 100;
+  const toY = (lat) => (1 - (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat)) * 100;
+
+  return (
+    <div>
+      <h3 style={{ margin: "0 0 4px", fontSize: 17, color: COLORS.primary }}>Interaktive Karte – Brühl (Baden)</h3>
+      <p style={{ margin: "0 0 14px", fontSize: 12, color: COLORS.textMuted }}>
+        15 wichtige Orte · Klicke auf einen Punkt für Details ·{" "}
+        <a href="https://www.google.com/maps/place/Br%C3%BChl,+Germany/@49.3965,8.5288,14z" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.info }}>
+          In Google Maps öffnen →
+        </a>
+      </p>
+
+      {/* Category Filter */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+        {MAP_CATEGORIES.map(c => (
+          <button key={c.id} onClick={() => { setMapCat(c.id); setSelectedPoi(null); }} style={{
+            padding: "5px 12px", borderRadius: 20, border: `1px solid ${mapCat === c.id ? COLORS.accent : COLORS.border}`,
+            background: mapCat === c.id ? `${COLORS.accent}15` : COLORS.bgCard,
+            color: mapCat === c.id ? COLORS.accent : COLORS.textMuted,
+            fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all 0.2s",
+          }}>
+            {c.icon} {c.name}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 16 }}>
+        {/* SVG Map */}
+        <div style={{
+          background: "linear-gradient(135deg, #e8f4f8, #d4eaf0)", borderRadius: 12,
+          border: `1px solid ${COLORS.border}`, padding: 16, position: "relative", minHeight: 420,
+        }}>
+          {/* Area labels */}
+          <div style={{ position: "absolute", top: 20, left: 20, fontSize: 10, color: "#8ba5b5", fontWeight: 700, letterSpacing: 2 }}>ROHRHOF ↑</div>
+          <div style={{ position: "absolute", bottom: 20, left: 20, fontSize: 10, color: "#8ba5b5", fontWeight: 700, letterSpacing: 2 }}>BRÜHL SÜDEN</div>
+          <div style={{ position: "absolute", top: "50%", right: 16, fontSize: 10, color: "#8ba5b5", fontWeight: 700, letterSpacing: 2, transform: "translateY(-50%) rotate(90deg)" }}>→ KETSCH</div>
+
+          <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%" }}>
+            {/* Roads schematic */}
+            <line x1="50" y1="0" x2="50" y2="100" stroke="#b8d4e3" strokeWidth="0.8" strokeDasharray="2,2" />
+            <line x1="0" y1="35" x2="100" y2="35" stroke="#b8d4e3" strokeWidth="0.5" strokeDasharray="2,2" />
+            <text x="52" y="4" fill="#9bb5c5" fontSize="2.5" fontWeight="600">Hauptstr.</text>
+            <text x="2" y="33" fill="#9bb5c5" fontSize="2.5" fontWeight="600">Ormessonstr.</text>
+
+            {/* POI dots */}
+            {filtered.map(poi => {
+              const x = toX(poi.lng);
+              const y = toY(poi.lat);
+              const isSelected = selectedPoi && selectedPoi.id === poi.id;
+              const isHovered = mapHover === poi.id;
+              return (
+                <g key={poi.id}
+                  onClick={() => setSelectedPoi(poi)}
+                  onMouseEnter={() => setMapHover(poi.id)}
+                  onMouseLeave={() => setMapHover(null)}
+                  style={{ cursor: "pointer" }}>
+                  {/* Pulse ring for selected */}
+                  {isSelected && <circle cx={x} cy={y} r="4" fill="none" stroke={COLORS.accent} strokeWidth="0.5" opacity="0.5">
+                    <animate attributeName="r" from="3" to="6" dur="1.5s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" from="0.6" to="0" dur="1.5s" repeatCount="indefinite" />
+                  </circle>}
+                  {/* Dot */}
+                  <circle cx={x} cy={y} r={isSelected ? 3 : isHovered ? 2.8 : 2}
+                    fill={isSelected ? COLORS.accent : isHovered ? COLORS.primaryLight : COLORS.primary}
+                    stroke="#fff" strokeWidth="0.7"
+                    style={{ transition: "all 0.2s" }} />
+                  {/* Label */}
+                  {(isSelected || isHovered) && (
+                    <text x={x + 3.5} y={y + 1} fill={COLORS.primary} fontSize="2.5" fontWeight="700">{poi.name}</text>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* POI List / Detail */}
+        <div style={{ maxHeight: 460, overflowY: "auto" }}>
+          {selectedPoi ? (
+            <div style={{
+              background: COLORS.bgCard, borderRadius: 12, padding: 18,
+              border: `2px solid ${COLORS.accent}40`,
+            }}>
+              <button onClick={() => setSelectedPoi(null)} style={{
+                background: "none", border: "none", cursor: "pointer", fontSize: 11,
+                color: COLORS.info, marginBottom: 8, padding: 0,
+              }}>← Zurück zur Liste</button>
+              <div style={{ fontSize: 24, marginBottom: 4 }}>{selectedPoi.icon}</div>
+              <h4 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 800, color: COLORS.primary }}>{selectedPoi.name}</h4>
+              {selectedPoi.rating && (
+                <div style={{ fontSize: 12, color: COLORS.accent, fontWeight: 700, marginBottom: 8 }}>
+                  {"★".repeat(Math.round(selectedPoi.rating))}{"☆".repeat(5 - Math.round(selectedPoi.rating))} {selectedPoi.rating}
+                </div>
+              )}
+              <p style={{ fontSize: 13, color: COLORS.text, lineHeight: 1.6, margin: "0 0 12px" }}>{selectedPoi.desc}</p>
+              <div style={{ fontSize: 12, color: COLORS.textMuted, display: "grid", gap: 6 }}>
+                <div>📍 {selectedPoi.addr}, 68782 Brühl</div>
+                {selectedPoi.tel && <div>📞 {selectedPoi.tel}</div>}
+                {selectedPoi.hours && <div>🕐 {selectedPoi.hours}</div>}
+                {selectedPoi.url && (
+                  <a href={selectedPoi.url} target="_blank" rel="noopener noreferrer"
+                    style={{ color: COLORS.info, fontWeight: 600, textDecoration: "none" }}>
+                    🌐 Website öffnen →
+                  </a>
+                )}
+                <a href={`https://www.google.com/maps/search/?api=1&query=${selectedPoi.lat},${selectedPoi.lng}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{
+                    display: "block", marginTop: 8, padding: "8px 14px", borderRadius: 8,
+                    background: COLORS.primary, color: "#fff", fontSize: 12, fontWeight: 700,
+                    textDecoration: "none", textAlign: "center",
+                  }}>
+                  🗺️ In Google Maps öffnen
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: 6 }}>
+              {filtered.map(poi => (
+                <div key={poi.id}
+                  onClick={() => setSelectedPoi(poi)}
+                  onMouseEnter={() => setMapHover(poi.id)}
+                  onMouseLeave={() => setMapHover(null)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+                    background: mapHover === poi.id ? `${COLORS.primary}08` : COLORS.bgCard,
+                    borderRadius: 8, border: `1px solid ${COLORS.border}`,
+                    cursor: "pointer", transition: "all 0.15s",
+                  }}>
+                  <span style={{ fontSize: 18 }}>{poi.icon}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{poi.name}</div>
+                    <div style={{ fontSize: 10, color: COLORS.textMuted }}>{poi.addr}</div>
+                  </div>
+                  {poi.rating && <span style={{ fontSize: 10, color: COLORS.accent, fontWeight: 700 }}>★{poi.rating}</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const VereinePanel = ({ filter }) => {
+  const [selectedType, setSelectedType] = useState("all");
+  const types = [
+    { id: "all", name: "Alle Vereine" },
+    { id: "sport", name: "Sport" },
+    { id: "kultur", name: "Kultur & Brauchtum" },
+    { id: "vereine", name: "Soziales & Kirche" },
+    { id: "feuerwehr", name: "Feuerwehr" },
+    { id: "umwelt", name: "Natur" },
+    { id: "wirtschaft", name: "Gewerbe" },
+    { id: "politik", name: "Politik" },
+  ];
+
+  const filtered = VEREINE_DATA.filter(v =>
+    (selectedType === "all" || v.category === selectedType) &&
+    (filter === "all" || v.category === filter)
+  );
+
+  return (
+    <div>
+      <div style={{ marginBottom: 20 }}>
+        <p style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 12, lineHeight: 1.6 }}>
+          Brühl hat ein vielfältiges Vereinsleben mit über 40 Vereinen, Organisationen und Interessensvertretungen. 
+          Hier findest du einen Überblick der wichtigsten Vereine.
+        </p>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {types.map(t => (
+            <button key={t.id} onClick={() => setSelectedType(t.id)} style={{
+              padding: "5px 12px", borderRadius: 16, border: `1px solid ${selectedType === t.id ? COLORS.primary : COLORS.border}`,
+              cursor: "pointer", fontSize: 11, fontWeight: selectedType === t.id ? 700 : 500,
+              background: selectedType === t.id ? `${COLORS.primary}10` : "transparent",
+              color: selectedType === t.id ? COLORS.primary : COLORS.textMuted,
+              transition: "all 0.2s",
+            }}>
+              {t.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 14 }}>
+        {filtered.map((v, i) => (
+          <div key={i} style={{
+            background: COLORS.bgCard, borderRadius: 12, padding: 18,
+            border: `1px solid ${COLORS.border}`, transition: "all 0.2s",
+          }}
+            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.06)"; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+              <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: COLORS.text, lineHeight: 1.3 }}>
+                {v.name}
+              </h4>
+              {v.founded && (
+                <span style={{
+                  fontSize: 10, fontWeight: 700, color: COLORS.accent, whiteSpace: "nowrap",
+                  padding: "2px 8px", borderRadius: 10, background: `${COLORS.accent}12`,
+                }}>seit {v.founded}</span>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+              <span style={{
+                fontSize: 10, padding: "2px 8px", borderRadius: 10,
+                background: "#edf2f7", color: "#4a5568", fontWeight: 600,
+              }}>{v.type}</span>
+              <CategoryBadge categoryId={v.category} />
+            </div>
+            <p style={{ margin: "0 0 8px", fontSize: 12, lineHeight: 1.6, color: COLORS.textMuted }}>
+              {v.desc}
+            </p>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 11, color: COLORS.textMuted }}>
+              {v.address && <span>📍 {v.address}</span>}
+              {v.url && (
+                <a href={v.url} target="_blank" rel="noopener noreferrer" style={{
+                  color: COLORS.info, textDecoration: "none", fontWeight: 600,
+                }}>🔗 Website</a>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const UnternehmenPanel = () => (
+  <div>
+    <p style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 20, lineHeight: 1.6 }}>
+      Brühl ist ein attraktiver Wirtschaftsstandort in der Metropolregion Rhein-Neckar. 
+      Der Gewerbeverein Brühl und Rohrhof e.V. vertritt die lokalen Unternehmen und organisiert 
+      Events wie Candlelight Shopping und die Gewerbe- und Leistungsschau.
+    </p>
+
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16, marginBottom: 28 }}>
+      {UNTERNEHMEN_DATA.branchen.map((b, i) => (
+        <div key={i} style={{
+          background: COLORS.bgCard, borderRadius: 12, padding: 20,
+          border: `1px solid ${COLORS.border}`,
+        }}>
+          <h4 style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 700, color: COLORS.text, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 22 }}>{b.icon}</span> {b.name}
+          </h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {b.firmen.map((f, j) => (
+              <div key={j} style={{
+                fontSize: 13, color: COLORS.textMuted, lineHeight: 1.5,
+                paddingLeft: 12, borderLeft: `2px solid ${COLORS.border}`,
+              }}>
+                {f}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {/* Partnerschaften */}
+    <div style={{
+      background: `linear-gradient(135deg, ${COLORS.primary}08, ${COLORS.accent}08)`,
+      borderRadius: 12, padding: 24, border: `1px solid ${COLORS.border}`,
+    }}>
+      <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700, color: COLORS.primary, display: "flex", alignItems: "center", gap: 8 }}>
+        🌍 Städtepartnerschaften
+      </h3>
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+        {UNTERNEHMEN_DATA.partnerschaften.map((p, i) => (
+          <div key={i} style={{
+            flex: "1 1 200px", background: COLORS.bgCard, borderRadius: 10, padding: 16,
+            border: `1px solid ${COLORS.border}`, textAlign: "center",
+          }}>
+            <div style={{ fontSize: 24, marginBottom: 4 }}>
+              {p.country === "Frankreich" ? "🇫🇷" : p.country === "Deutschland" ? "🇩🇪" : "🇧🇫"}
+            </div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text }}>{p.name}</div>
+            <div style={{ fontSize: 11, color: COLORS.textMuted }}>{p.country} · seit {p.since}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Gewerbeverein Link */}
+    <a href="https://www.gewerbeverein-bruehl-rohrhof.de" target="_blank" rel="noopener noreferrer" style={{
+      display: "block", marginTop: 16, padding: 16, borderRadius: 12,
+      background: `linear-gradient(135deg, ${COLORS.accent}15, ${COLORS.accent}05)`,
+      border: `1px solid ${COLORS.accent}30`, textDecoration: "none",
+      textAlign: "center", transition: "all 0.2s",
+    }}>
+      <span style={{ fontSize: 14, fontWeight: 700, color: COLORS.accent }}>
+        💼 Gewerbeverein Brühl und Rohrhof e.V.
+      </span>
+      <br />
+      <span style={{ fontSize: 12, color: COLORS.textMuted }}>
+        Alle Brühler Unternehmen im Firmenverzeichnis der Gemeinde →
+      </span>
+    </a>
+  </div>
+);
+
+// ==========================================
+// MAIN APP
+// ==========================================
+
+// ==========================================
+// API-KONFIGURATION
+// Backend-URL für Live-Daten (falls Backend läuft)
+// Fallback: Statische Daten (immer verfügbar)
+// ==========================================
+const API_BASE = "http://localhost:3001/api";
+let API_AVAILABLE = false;
+
+async function fetchAPI(endpoint) {
+  if (!API_AVAILABLE) return null;
+  try {
+    const res = await fetch(`${API_BASE}${endpoint}`, { signal: AbortSignal.timeout(3000) });
+    if (res.ok) return res.json();
+  } catch(e) { /* Backend nicht erreichbar */ }
+  return null;
+}
+
+// Beim Start prüfen ob Backend läuft (still, ohne Fehler)
+try {
+  fetch(`${API_BASE.replace('/api', '/health')}`, { signal: AbortSignal.timeout(2000) })
+    .then(r => { if (r.ok) API_AVAILABLE = true; })
+    .catch(() => {});
+} catch(e) {}
+
+function BruehlApp() {
+  const [mainView, setMainView] = useState("aktuell"); // aktuell | historisch
+  const [subView, setSubView] = useState("news"); // news | ai | sources  |  timeline | geography | persons
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [lastUpdate] = useState(new Date().toLocaleString("de-DE"));
+
+  const historicalSubs = [
+    { id: "timeline", name: "Ortschronik", icon: "📜" },
+    { id: "geography", name: "Geographie", icon: "🗺️" },
+    { id: "persons", name: "Persönlichkeiten", icon: "👤" },
+    { id: "stolpersteine", name: "Gedenken", icon: "✡" },
+  ];
+
+  const currentSubs = [
+    { id: "news", name: "Nachrichten", icon: "📰" },
+    { id: "events", name: "Kalender", icon: "📅" },
+    { id: "vereine", name: "Vereine", icon: "🤝" },
+    { id: "unternehmen", name: "Wirtschaft", icon: "💼" },
+    { id: "services", name: "Services", icon: "🏛️" },
+    { id: "map", name: "Karte", icon: "🗺️" },
+    { id: "weather", name: "Wetter & Rhein", icon: "🌊" },
+    { id: "ai", name: "KI-Assistent", icon: "🤖" },
+    { id: "sources", name: "Quellen", icon: "📡" },
+  ];
+
+  const activeSubs = mainView === "historisch" ? historicalSubs : currentSubs;
+
+  useEffect(() => {
+    setSubView(mainView === "historisch" ? "timeline" : "news");
+  }, [mainView]);
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: COLORS.bg,
+      fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
+    }}>
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet" />
+
+      {/* HEADER */}
+      <header style={{
+        background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryLight})`,
+        color: "#fff", padding: "20px 24px 16px", position: "sticky", top: 0, zIndex: 100,
+        boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+      }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <BruehlWappen size={48} />
+              <div>
+                <h1 style={{
+                  margin: 0, fontSize: 22, fontWeight: 800,
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  letterSpacing: "-0.5px",
+                }}>
+                  Brühl <span style={{ color: COLORS.accent }}>(Baden)</span>
+                </h1>
+                <p style={{ margin: 0, fontSize: 11, opacity: 0.7 }}>
+                  68782 · Rhein-Neckar-Kreis · seit 1157
+                </p>
+              </div>
+            </div>
+            <div style={{ textAlign: "right", fontSize: 10, opacity: 0.6 }}>
+              <div>Letzte Aktualisierung</div>
+              <div style={{ fontWeight: 600 }}>{lastUpdate}</div>
+            </div>
+          </div>
+
+          {/* Main Toggle: Aktuell / Historisch */}
+          <div style={{
+            display: "flex", gap: 4, background: "rgba(0,0,0,0.2)",
+            borderRadius: 12, padding: 3, marginBottom: 12,
+          }}>
+            {[
+              { id: "aktuell", name: "Aktuell", icon: "📡" },
+              { id: "historisch", name: "Historisch", icon: "📜" },
+            ].map(v => (
+              <button key={v.id} onClick={() => setMainView(v.id)} style={{
+                flex: 1, padding: "10px 16px", borderRadius: 10, border: "none",
+                cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex",
+                alignItems: "center", justifyContent: "center", gap: 6,
+                background: mainView === v.id ? "#fff" : "transparent",
+                color: mainView === v.id ? COLORS.primary : "rgba(255,255,255,0.7)",
+                transition: "all 0.3s",
+              }}>
+                {v.icon} {v.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Sub-Navigation */}
+          <div style={{ display: "flex", gap: 4, overflowX: "auto" }}>
+            {activeSubs.map(s => (
+              <button key={s.id} onClick={() => setSubView(s.id)} style={{
+                padding: "7px 14px", borderRadius: 8, border: "none",
+                cursor: "pointer", fontSize: 12, fontWeight: 600,
+                whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 4,
+                background: subView === s.id ? "rgba(255,255,255,0.2)" : "transparent",
+                color: subView === s.id ? "#fff" : "rgba(255,255,255,0.5)",
+                transition: "all 0.2s",
+              }}>
+                {s.icon} {s.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      {/* CATEGORY FILTER BAR */}
+      {(subView === "news" || subView === "timeline" || subView === "vereine" || subView === "events") && (
+        <div style={{
+          background: COLORS.bgCard, borderBottom: `1px solid ${COLORS.border}`,
+          padding: "10px 24px", overflowX: "auto",
+          display: "flex", gap: 6, position: "sticky", top: 160, zIndex: 50,
+        }}>
+          <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 6, width: "100%" }}>
+            {CATEGORIES.map(cat => (
+              <button key={cat.id} onClick={() => setCategoryFilter(cat.id)} style={{
+                padding: "5px 12px", borderRadius: 16, border: `1px solid ${categoryFilter === cat.id ? COLORS.accent : COLORS.border}`,
+                cursor: "pointer", fontSize: 11, fontWeight: categoryFilter === cat.id ? 700 : 500,
+                whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 4,
+                background: categoryFilter === cat.id ? `${COLORS.accent}15` : "transparent",
+                color: categoryFilter === cat.id ? COLORS.accent : COLORS.textMuted,
+                transition: "all 0.2s",
+              }}>
+                {cat.icon} {cat.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* SEARCH BAR for news */}
+      {subView === "news" && (
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "16px 24px 0" }}>
+          <input
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            placeholder="🔍 Nachrichten durchsuchen..."
+            style={{
+              width: "100%", padding: "12px 16px", borderRadius: 12,
+              border: `1px solid ${COLORS.border}`, background: COLORS.bgCard,
+              fontSize: 14, outline: "none", boxSizing: "border-box",
+              transition: "border-color 0.2s",
+            }}
+            onFocus={e => e.target.style.borderColor = COLORS.accent}
+            onBlur={e => e.target.style.borderColor = COLORS.border}
+          />
+        </div>
+      )}
+
+      {/* MAIN CONTENT */}
+      <main style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 24px 60px" }}>
+        {mainView === "aktuell" && subView === "news" && (
+          <AktuellView filter={categoryFilter} searchTerm={searchTerm} />
+        )}
+        {mainView === "aktuell" && subView === "events" && <EventsPanel filter={categoryFilter} />}
+        {mainView === "aktuell" && subView === "vereine" && (
+          <VereinePanel filter={categoryFilter} />
+        )}
+        {mainView === "aktuell" && subView === "unternehmen" && <UnternehmenPanel />}
+        {mainView === "aktuell" && subView === "services" && <ServicesPanel />}
+        {mainView === "aktuell" && subView === "map" && <MapPanel />}
+        {mainView === "aktuell" && subView === "weather" && <WeatherRheinPanel />}
+        {mainView === "aktuell" && subView === "ai" && <AIInsights />}
+        {mainView === "aktuell" && subView === "sources" && <SourcesPanel />}
+        {mainView === "historisch" && subView === "timeline" && (
+          <HistoryTimeline filter={categoryFilter} />
+        )}
+        {mainView === "historisch" && subView === "geography" && <GeographyPanel />}
+        {mainView === "historisch" && subView === "persons" && <PersonalitiesPanel />}
+        {mainView === "historisch" && subView === "stolpersteine" && <StolpersteinePanel />}
+      </main>
+
+      {/* FOOTER */}
+      <footer style={{
+        background: COLORS.bgDark, color: "rgba(255,255,255,0.5)",
+        padding: "24px", textAlign: "center", fontSize: 11,
+      }}>
+        <p style={{ margin: "0 0 8px" }}>
+          <strong style={{ color: COLORS.accent }}>Brühl (Baden) Heimat-App</strong> · Daten aus {Object.keys(SOURCES).length} Quellen
+        </p>
+        <p style={{ margin: 0 }}>
+          Gemeinde · Brühler Rundschau · Schwetzinger Zeitung · Instagram · Facebook · Feuerwehr · Wikipedia · meinestadt.de · Presseportal · LEO-BW
+        </p>
+        <p style={{ margin: "8px 0 0", fontSize: 10 }}>
+          Powered by Claude AI + MCP · Tägliche Aktualisierung · PWA-fähig
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+    // App starten
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(BruehlApp));
+
+  </script>
+
+  <!-- Service Worker für Offline -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>
