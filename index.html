@@ -152,13 +152,15 @@ const BruehlWappen = ({ size = 44 }) => (
 const VEREINE_DATA = [
   // Sport
   { name: "FV 1918 Brühl e.V.", category: "sport", type: "Fußball, Leichtathletik, Kampfsport", founded: 1918, address: "Ketscher Str. 65", url: "http://www.fv-bruehl.de", colors: "blau-schwarz", desc: "Traditionsverein mit Fußball, Leichtathletik und Kampfsport. Heimat von Maurizio Gaudino." },
-  { name: "TV Brühl 1912 e.V.", category: "sport", type: "Turnen, Handball, Gymnastik, Yoga", founded: 1912, address: "Wiesenplätz 2", url: "https://tvbrühl.de", desc: "Turn- und Sportverein mit Handball (SG Brühl/Ketsch), Turnen, Yoga, Walking und mehr." },
+  { name: "TV Brühl 1912 e.V.", category: "sport", type: "Turnen, Handball, Gymnastik, Yoga", founded: 1912, address: "Wiesenplätz 2", url: "https://tvbrühl.de", desc: "Größter Verein Brühls mit ca. 1.600 Mitgliedern. Handball (SG Brühl/Ketsch), Turnen, Yoga, Walking und mehr." },
+  { name: "SV Rohrhof", category: "sport", type: "Fußball", founded: null, address: "Rohrhof", url: null, desc: "Sportverein im Ortsteil Rohrhof mit Fußball und Breitensport." },
   { name: "Angelsportverein 1965 Brühl e.V.", category: "sport", type: "Angelsport", founded: 1965, address: "Weidweg 2", url: "http://www.asv65.de", desc: "Aktiver Angelverein am Rhein mit Vereinsheim, Familientagen und Räucherfischverkauf." },
   { name: "ASV Frühauf 1949 Brühl e.V.", category: "sport", type: "Angelsport", founded: 1949, address: "Brühl", url: "http://www.asv1949-brühl.de", desc: "Einer der ältesten Angelvereine Brühls mit geselligem Vereinsleben." },
-  { name: "Wassersportverein Brühl", category: "sport", type: "Wassersport", founded: null, address: "Brühl", url: null, desc: "Wassersport am Rhein und den umliegenden Gewässern." },
-  { name: "Schützenverein Brühl", category: "sport", type: "Schießsport", founded: null, address: "Schützenhaus", url: null, desc: "Sportschützen mit eigenem Schützenhaus und regelmäßigem Trainingsbetrieb." },
+  { name: "Schwimmverein Hellas Brühl", category: "sport", type: "Schwimmen", founded: null, address: "Hallenbad Brühl", url: null, desc: "Schwimmverein mit Schwimmkursen für Kinder und Erwachsene. Kooperiert mit der Stiftung Sternenglück." },
+  { name: "Schützenverein Brühl", category: "sport", type: "Schießsport", founded: null, address: "Schützenhaus", url: null, desc: "Sportschützen mit eigenem Schützenhaus. Traditionelles Ostereierschießen." },
   // Musik & Kultur
   { name: "Musikverein Brühl e.V.", category: "kultur", type: "Blasmusik", founded: null, address: "Friedrichstr. 5", url: null, desc: "Traditioneller Musikverein mit Blasorchester und Jugendausbildung." },
+  { name: "Chorgemeinschaft Brühl/Baden", category: "kultur", type: "Gesang", founded: null, address: "Brühl", url: null, desc: "Gemischter Chor mit regelmäßigen Auftritten bei Gemeindeveranstaltungen." },
   { name: "Spielmannszug der Feuerwehr Brühl", category: "kultur", type: "Spielmannszug", founded: null, address: "Feuerwehr Brühl", url: "https://ffw-bruehl.de", desc: "Seit über 100 Jahren aktiv. Begleitet Feste, Umzüge und Feuerwehrveranstaltungen." },
   // Heimat & Brauchtum
   { name: "Verein für Heimat- und Brauchtumspflege Brühl/Rohrhof e.V.", category: "kultur", type: "Heimatpflege, Museum", founded: 1995, address: "Erzbergerstr. 45", url: "http://www.heimatverein-bruehl.de", desc: "Betreibt das Heimatmuseum 'Rheingold' mit Schwerpunkt Luftschiffbau Schütte-Lanz und Ziegeleien. Gibt die 'Ortsschell' heraus." },
@@ -167,15 +169,23 @@ const VEREINE_DATA = [
   { name: "Kollerkrotten Brühl", category: "kultur", type: "Karneval", founded: null, address: "Brühl", url: "http://www.kollerkrotten-bruehl.de", desc: "Brühler Karnevalsverein, benannt nach der Kollerinsel." },
   // Soziales & Hilfsorganisationen
   { name: "DRK Ortsverein Brühl", category: "vereine", type: "Hilfsorganisation", founded: null, address: "Brühl", url: null, desc: "Deutsches Rotes Kreuz – Blutspendetermine, Erste-Hilfe-Kurse und Rettungsdienst-Ausbildung." },
-  { name: "Freiwillige Feuerwehr Brühl", category: "feuerwehr", type: "Feuerwehr", founded: 1900, address: "Brühl", url: "https://ffw-bruehl.de", desc: "125 Jahre Feuerwehr (Jubiläum 2025). Mehrere Abteilungen, Jugendfeuerwehr und Seelsorge-Team." },
+  { name: "Stiftung Sternenglück für Brühler und Rohrhofer Kinder", category: "vereine", type: "Kinderhilfe, Stiftung", founded: 2012, address: "Brühl", url: "https://www.stiftung-sternenglueck.de", desc: "Gegründet 2012 von Monika Zoepke. Unterstützt bedürftige Kinder: Schwimmkurse mit SV Hellas, Schulausstattung, Klassenfahrten, gesundes Frühstück an der Jahnschule. Finanziert durch Glückssterne-Aktion des Gewerbevereins." },
+  { name: "VdK Ortsverband Brühl", category: "vereine", type: "Sozialverband", founded: null, address: "Brühl", url: null, desc: "Sozialverband VdK – Beratung und Interessenvertretung in sozialen Fragen." },
+  { name: "Freiwillige Feuerwehr Brühl", category: "feuerwehr", type: "Feuerwehr", founded: 1900, address: "Am Schrankenbuckel 9", url: "https://ffw-bruehl.de", desc: "125 Jahre Feuerwehr (Jubiläum 2025). Mehrere Abteilungen, Jugendfeuerwehr, Spielmannszug und Seelsorge-Team." },
   // Kirche
-  { name: "Katholische Kirchengemeinde", category: "vereine", type: "Kirchliche Vereine", founded: null, address: "Kirchenstr. 15", url: null, desc: "Kirchliche Vereine und Gruppen der katholischen Gemeinde St. Sebastian." },
+  { name: "Katholische Kirchengemeinde", category: "vereine", type: "Kirchliche Vereine", founded: null, address: "Kirchenstr. 15", url: null, desc: "Kirchliche Vereine und Gruppen der katholischen Gemeinde St. Sebastian/Schutzengelkirche." },
   { name: "Evangelische Kirchengemeinde", category: "vereine", type: "Kirchliche Vereine", founded: null, address: "Brühl", url: null, desc: "Evangelische Gemeinde im Kirchenbezirk Südliche Kurpfalz. Gemeindezentrum seit 1996." },
   // Natur
   { name: "Obst- und Gartenbauverein", category: "umwelt", type: "Natur, Garten", founded: null, address: "Pferchstückerweg", url: null, desc: "Pflege von Streuobstwiesen, Gartenberatung und Naturschutzaktivitäten." },
   // Politik
-  { name: "Grüne Liste Brühl", category: "politik", type: "Wählervereinigung", founded: null, address: "Brühl", url: "http://www.grueneliste-bruehl.de", desc: "Kommunalpolitische Wählervereinigung im Brühler Gemeinderat." },
-  { name: "Gewerbeverein Brühl und Rohrhof e.V.", category: "wirtschaft", type: "Gewerbe", founded: null, address: "Brühl", url: "https://www.gewerbeverein-bruehl-rohrhof.de", desc: "Vertretung der lokalen Unternehmen. Organisiert Candlelight Shopping, Zunftbaumfest und Gewerbe- und Leistungsschau." },
+  { name: "CDU Brühl", category: "politik", type: "Partei (6 Sitze im Gemeinderat)", founded: null, address: "Brühl", url: null, desc: "Stärkste Fraktion im Gemeinderat 2024 mit 6 Sitzen. Zusammen mit FDP als CDU/FDP-Fraktion aktiv." },
+  { name: "SPD Ortsverein Brühl-Rohrhof", category: "politik", type: "Partei (5 Sitze im Gemeinderat)", founded: null, address: "Brühl", url: "https://www.spd-bruehl-rohrhof.de", desc: "5 Sitze im Gemeinderat. Bürgermeister Dr. Ralf Göck ist SPD-Mitglied. Engagiert in Sozial- und Bildungspolitik." },
+  { name: "Freie Wähler Brühl-Rohrhof e.V.", category: "politik", type: "Wählervereinigung (4 Sitze im Gemeinderat)", founded: null, address: "Brühl", url: "http://fw-bruehl-rohrhof.de", desc: "Eingetragener Verein, keine Partei. 4 Sitze im Gemeinderat. Unabhängig, ohne Parteiprogramm – entscheiden frei im Interesse der Bürger." },
+  { name: "Grüne Liste Brühl", category: "politik", type: "Wählervereinigung (3 Sitze im Gemeinderat)", founded: null, address: "Brühl", url: "http://www.grueneliste-bruehl.de", desc: "3 Sitze im Gemeinderat. Kommunalpolitische Wählervereinigung mit Schwerpunkt Umwelt und Klimaschutz." },
+  { name: "AfD Brühl", category: "politik", type: "Partei (3 Sitze im Gemeinderat)", founded: null, address: "Brühl", url: null, desc: "Seit der Gemeinderatswahl 2024 erstmals im Gemeinderat vertreten mit 3 Sitzen. Größter Stimmenzuwachs 2024 (+12,6 Prozentpunkte)." },
+  { name: "FDP Brühl", category: "politik", type: "Partei (1 Sitz im Gemeinderat)", founded: null, address: "Brühl", url: null, desc: "Seit 2024 erstmals im Gemeinderat mit 1 Sitz. Bildet mit der CDU die CDU/FDP-Fraktion." },
+  // Wirtschaft
+  { name: "Gewerbeverein Brühl und Rohrhof e.V.", category: "wirtschaft", type: "Gewerbe", founded: null, address: "Mannheimer Str. 19", url: "https://www.gewerbeverein-bruehl-rohrhof.de", desc: "Vertretung der lokalen Unternehmen. Organisiert Candlelight Shopping, Zunftbaumfest, Gewerbe- und Leistungsschau. Unterstützt Stiftung Sternenglück mit Glückssterne-Aktion." },
 ];
 
 // Unternehmen & Wirtschaft
@@ -1054,11 +1064,41 @@ const StolpersteinePanel = () => (
 
 const WeatherRheinPanel = () => {
   const [weather, setWeather] = useState(null);
-  useEffect(() => {
-    // In production: fetch from OpenWeatherMap API + Rhein Pegelstand API
-    setWeather({ temp: 7, desc: "Bewölkt", humidity: 72, wind: 12, pegel: 4.2, pegelTrend: "stabil" });
+  const [pegel, setPegel] = useState(null);
+
+  useEffect(function() {
+    // Open-Meteo API (kostenlos, kein API-Key noetig!)
+    fetch("https://api.open-meteo.com/v1/forecast?latitude=49.3965&longitude=8.5328&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=Europe/Berlin")
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.current) {
+          var codes = {0:"Klar",1:"Überwiegend klar",2:"Teilweise bewölkt",3:"Bewölkt",45:"Nebel",48:"Reifnebel",51:"Leichter Nieselregen",53:"Nieselregen",55:"Starker Nieselregen",61:"Leichter Regen",63:"Regen",65:"Starker Regen",71:"Leichter Schneefall",73:"Schneefall",75:"Starker Schneefall",80:"Regenschauer",81:"Starke Regenschauer",95:"Gewitter"};
+          setWeather({
+            temp: Math.round(data.current.temperature_2m),
+            desc: codes[data.current.weather_code] || "Bewölkt",
+            humidity: data.current.relative_humidity_2m,
+            wind: Math.round(data.current.wind_speed_10m),
+          });
+        }
+      })
+      .catch(function() {
+        setWeather({ temp: 8, desc: "Nicht verfügbar", humidity: 70, wind: 10 });
+      });
+
+    // WSV Pegelonline API (Rhein bei Mannheim)
+    fetch("https://www.pegelonline.wsv.de/webservices/rest-api/v2/stations/MANNHEIM/W/currentmeasurement.json")
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.value) {
+          setPegel({ level: (data.value / 100).toFixed(2), trend: "aktuell" });
+        }
+      })
+      .catch(function() {
+        setPegel({ level: "4.20", trend: "nicht verfügbar" });
+      });
   }, []);
-  if (!weather) return <LoadingDots />;
+
+  if (!weather) return React.createElement(LoadingDots, null);
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
       <div style={{
@@ -1078,8 +1118,8 @@ const WeatherRheinPanel = () => {
         border: `1px solid #68d39140`,
       }}>
         <h3 style={{ margin: "0 0 12px", fontSize: 16, color: "#22543d" }}>🌊 Rhein-Pegelstand</h3>
-        <div style={{ fontSize: 48, fontWeight: 800, color: "#22543d", marginBottom: 4 }}>{weather.pegel}m</div>
-        <div style={{ fontSize: 14, color: "#38a169", marginBottom: 8 }}>Trend: {weather.pegelTrend}</div>
+        <div style={{ fontSize: 48, fontWeight: 800, color: "#22543d", marginBottom: 4 }}>{pegel ? pegel.level : "..."}m</div>
+        <div style={{ fontSize: 14, color: "#38a169", marginBottom: 8 }}>Trend: {pegel ? pegel.trend : "laden..."}</div>
         <p style={{ margin: 0, fontSize: 11, color: "#4a7c59", lineHeight: 1.5 }}>
           Relevant für die Kollerinsel und Rheinauen. 
           Bei Hochwasser: Infos unter bruehl-baden.de/hochwasser
@@ -1440,6 +1480,95 @@ const UnternehmenPanel = () => (
 // ==========================================
 
 // ==========================================
+// POLITIK-PANEL
+// ==========================================
+
+const GEMEINDERAT_DATA = {
+  sitze: 22,
+  wahlbeteiligung: "61,5%",
+  wahlJahr: 2024,
+  buergermeister: { name: "Dr. Ralf Göck", partei: "SPD", seit: 1998 },
+  fraktionen: [
+    { name: "CDU", sitze: 6, farbe: "#1a1a1a", url: null, desc: "Stärkste Fraktion. Bildet mit FDP die CDU/FDP-Fraktion." },
+    { name: "SPD", sitze: 5, farbe: "#e3000f", url: "https://www.spd-bruehl-rohrhof.de", desc: "Bürgermeisterpartei. Engagiert in Sozial- und Bildungspolitik." },
+    { name: "Freie Wähler", sitze: 4, farbe: "#ff8c00", url: "http://fw-bruehl-rohrhof.de", desc: "Eingetragener Verein, unabhängig, ohne Parteiprogramm." },
+    { name: "Grüne Liste", sitze: 3, farbe: "#46962b", url: "http://www.grueneliste-bruehl.de", desc: "Schwerpunkt Umwelt und Klimaschutz." },
+    { name: "AfD", sitze: 3, farbe: "#009ee0", url: null, desc: "Seit 2024 erstmals im Gemeinderat." },
+    { name: "FDP", sitze: 1, farbe: "#ffed00", url: null, desc: "Seit 2024 erstmals im Gemeinderat. CDU/FDP-Fraktion." },
+  ],
+  themen: [
+    "Kommunale Wärmeplanung – Neue Rechtsgrundlage",
+    "Bebauungsplan Traumannswald 2. Änderung – Frühzeitige Bürgerbeteiligung",
+    "Windkraft-Flächen – Verband Rhein-Neckar",
+    "Geplante Tunnelsperrungen 2026",
+    "Erfassung von Tieren, Pflanzen und Biotopen",
+  ],
+};
+
+const PolitikPanel = () => (
+  <div>
+    <div style={{
+      background: "linear-gradient(135deg, #1a365d08, #c69c2e08)",
+      borderRadius: 12, padding: 20, marginBottom: 20,
+      border: "1px solid " + COLORS.border,
+    }}>
+      <h3 style={{ margin: "0 0 12px", fontSize: 16, color: COLORS.primary }}>Gemeinderat Brühl</h3>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center", marginBottom: 12 }}>
+        <div style={{ fontSize: 13, color: COLORS.text }}>
+          <strong>Bürgermeister:</strong> {GEMEINDERAT_DATA.buergermeister.name} ({GEMEINDERAT_DATA.buergermeister.partei}, seit {GEMEINDERAT_DATA.buergermeister.seit})
+        </div>
+        <div style={{ fontSize: 13, color: COLORS.textMuted }}>
+          {GEMEINDERAT_DATA.sitze} Sitze · Wahl {GEMEINDERAT_DATA.wahlJahr} · Beteiligung: {GEMEINDERAT_DATA.wahlbeteiligung}
+        </div>
+      </div>
+    </div>
+
+    <h4 style={{ margin: "0 0 12px", fontSize: 14, color: COLORS.primary }}>Sitzverteilung</h4>
+    <div style={{ display: "flex", borderRadius: 8, overflow: "hidden", marginBottom: 20, height: 32 }}>
+      {GEMEINDERAT_DATA.fraktionen.map(function(f) {
+        return React.createElement("div", {
+          key: f.name,
+          style: {
+            flex: f.sitze, background: f.farbe, display: "flex", alignItems: "center", justifyContent: "center",
+            color: f.farbe === "#ffed00" ? "#333" : "#fff", fontSize: 10, fontWeight: 700,
+          },
+          title: f.name + ": " + f.sitze + " Sitze",
+        }, f.sitze);
+      })}
+    </div>
+
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12, marginBottom: 24 }}>
+      {GEMEINDERAT_DATA.fraktionen.map(function(f) {
+        return React.createElement("div", {
+          key: f.name,
+          style: {
+            background: COLORS.bgCard, borderRadius: 10, padding: 16,
+            border: "1px solid " + COLORS.border, borderLeft: "4px solid " + f.farbe,
+          },
+        },
+          React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } },
+            React.createElement("h4", { style: { margin: 0, fontSize: 14, color: COLORS.text } }, f.name),
+            React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: f.farbe === "#ffed00" ? "#333" : f.farbe } }, f.sitze + " Sitze")
+          ),
+          React.createElement("p", { style: { margin: 0, fontSize: 12, color: COLORS.textMuted } }, f.desc),
+          f.url ? React.createElement("a", { href: f.url, target: "_blank", rel: "noopener noreferrer", style: { fontSize: 11, color: COLORS.info, marginTop: 4, display: "inline-block" } }, "Website →") : null
+        );
+      })}
+    </div>
+
+    <h4 style={{ margin: "0 0 12px", fontSize: 14, color: COLORS.primary }}>Aktuelle Themen im Gemeinderat</h4>
+    <div style={{ display: "grid", gap: 8 }}>
+      {GEMEINDERAT_DATA.themen.map(function(t, i) {
+        return React.createElement("div", {
+          key: i,
+          style: { padding: "10px 14px", borderRadius: 8, background: COLORS.bgCard, border: "1px solid " + COLORS.border, fontSize: 13, color: COLORS.text, display: "flex", alignItems: "center", gap: 8 },
+        }, React.createElement("span", null, "📋"), t);
+      })}
+    </div>
+  </div>
+);
+
+// ==========================================
 // API-KONFIGURATION
 // Backend-URL für Live-Daten (falls Backend läuft)
 // Fallback: Statische Daten (immer verfügbar)
@@ -1481,9 +1610,10 @@ function BruehlApp() {
   const currentSubs = [
     { id: "news", name: "Nachrichten", icon: "📰" },
     { id: "events", name: "Kalender", icon: "📅" },
+    { id: "politik", name: "Politik", icon: "🏛️" },
     { id: "vereine", name: "Vereine", icon: "🤝" },
     { id: "unternehmen", name: "Wirtschaft", icon: "💼" },
-    { id: "services", name: "Services", icon: "🏛️" },
+    { id: "services", name: "Services", icon: "🏠" },
     { id: "map", name: "Karte", icon: "🗺️" },
     { id: "weather", name: "Wetter & Rhein", icon: "🌊" },
     { id: "ai", name: "KI-Assistent", icon: "🤖" },
@@ -1621,6 +1751,7 @@ function BruehlApp() {
           <AktuellView filter={categoryFilter} searchTerm={searchTerm} />
         )}
         {mainView === "aktuell" && subView === "events" && <EventsPanel filter={categoryFilter} />}
+        {mainView === "aktuell" && subView === "politik" && <PolitikPanel />}
         {mainView === "aktuell" && subView === "vereine" && (
           <VereinePanel filter={categoryFilter} />
         )}
