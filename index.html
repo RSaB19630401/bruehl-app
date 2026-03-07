@@ -169,7 +169,7 @@ const VEREINE_DATA = [
   { name: "Kollerkrotten Brühl", category: "kultur", type: "Karneval", founded: null, address: "Brühl", url: "http://www.kollerkrotten-bruehl.de", desc: "Brühler Karnevalsverein, benannt nach der Kollerinsel." },
   // Soziales & Hilfsorganisationen
   { name: "DRK Ortsverein Brühl", category: "vereine", type: "Hilfsorganisation", founded: null, address: "Brühl", url: null, desc: "Deutsches Rotes Kreuz – Blutspendetermine, Erste-Hilfe-Kurse und Rettungsdienst-Ausbildung." },
-  { name: "Stiftung Sternenglück für Brühler und Rohrhofer Kinder", category: "vereine", type: "Kinderhilfe, Stiftung", founded: 2012, address: "Brühl", url: "https://www.stiftung-sternenglueck.de", desc: "Gegründet 2012 von Monika Zoepke. Unterstützt bedürftige Kinder: Schwimmkurse mit SV Hellas, Schulausstattung, Klassenfahrten, gesundes Frühstück an der Jahnschule. Finanziert durch Glückssterne-Aktion des Gewerbevereins." },
+  { name: "Sternenglück für Kinder e.V.", category: "vereine", type: "Kinderhilfe, Verein", founded: null, address: "Brühl", url: "https://www.stiftung-sternenglueck.de", desc: "Nachfolger der Stiftung Sternenglück. Unterstützt bedürftige Brühler und Rohrhofer Kinder: gesundes Frühstück im Hort an der Jahnschule, Schwimmkurse mit SV Hellas, Schulausstattung, Klassenfahrten. Finanziert durch Glückssterne-Aktion des Gewerbevereins." },
   { name: "VdK Ortsverband Brühl", category: "vereine", type: "Sozialverband", founded: null, address: "Brühl", url: null, desc: "Sozialverband VdK – Beratung und Interessenvertretung in sozialen Fragen." },
   { name: "Freiwillige Feuerwehr Brühl", category: "feuerwehr", type: "Feuerwehr", founded: 1900, address: "Am Schrankenbuckel 9", url: "https://ffw-bruehl.de", desc: "125 Jahre Feuerwehr (Jubiläum 2025). Mehrere Abteilungen, Jugendfeuerwehr, Spielmannszug und Seelsorge-Team." },
   // Kirche
@@ -1317,7 +1317,7 @@ const MapPanel = () => {
   );
 };
 
-const VereinePanel = ({ filter }) => {
+const VereinePanel = () => {
   const [selectedType, setSelectedType] = useState("all");
   const types = [
     { id: "all", name: "Alle Vereine" },
@@ -1330,10 +1330,9 @@ const VereinePanel = ({ filter }) => {
     { id: "politik", name: "Politik" },
   ];
 
-  const filtered = VEREINE_DATA.filter(v =>
-    (selectedType === "all" || v.category === selectedType) &&
-    (filter === "all" || v.category === filter)
-  );
+  const filtered = VEREINE_DATA.filter(function(v) {
+    return selectedType === "all" || v.category === selectedType;
+  });
 
   return (
     <div>
@@ -1753,7 +1752,7 @@ function BruehlApp() {
         {mainView === "aktuell" && subView === "events" && <EventsPanel filter={categoryFilter} />}
         {mainView === "aktuell" && subView === "politik" && <PolitikPanel />}
         {mainView === "aktuell" && subView === "vereine" && (
-          <VereinePanel filter={categoryFilter} />
+          <VereinePanel />
         )}
         {mainView === "aktuell" && subView === "unternehmen" && <UnternehmenPanel />}
         {mainView === "aktuell" && subView === "services" && <ServicesPanel />}
