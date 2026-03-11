@@ -351,7 +351,7 @@ const FALLBACK_NEWS = [
 
 var CURRENT_NEWS = FALLBACK_NEWS;
 
-// Live-Nachrichten vom Cloudflare Worker laden
+// Live-Nachrichten vom Cloudflare Worker laden (echtes Web-Scraping)
 var WORKER_URL = "https://white-recipe-9a06.rsab1963.workers.dev";
 
 async function fetchLiveNews() {
@@ -359,7 +359,7 @@ async function fetchLiveNews() {
     var response = await fetch(WORKER_URL);
     var data = await response.json();
     if (data.news && Array.isArray(data.news) && data.news.length > 0) {
-      return data.news;
+      return { news: data.news, sources: data.sources || [] };
     }
   } catch(e) {
     console.log("Live-Daten nicht verfuegbar:", e.message);
@@ -629,13 +629,15 @@ const AktuellView = ({ filter, searchTerm }) => {
   const [news, setNews] = useState(CURRENT_NEWS);
   const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sources, setSources] = useState([]);
 
   useEffect(function() {
-    fetchLiveNews().then(function(liveNews) {
-      if (liveNews) {
-        CURRENT_NEWS = liveNews;
-        setNews(liveNews);
+    fetchLiveNews().then(function(result) {
+      if (result && result.news) {
+        CURRENT_NEWS = result.news;
+        setNews(result.news);
         setIsLive(true);
+        if (result.sources) setSources(result.sources);
       }
       setLoading(false);
     });
@@ -656,9 +658,9 @@ const AktuellView = ({ filter, searchTerm }) => {
         border: loading ? "1px solid #feebc8" : isLive ? "1px solid #c6f6d5" : "1px solid #bee3f8",
       }}>
         <span style={{ fontSize: 14 }}>{loading ? "⏳" : isLive ? "🟢" : "📰"}</span>
-        {loading ? "Lade aktuelle Nachrichten..." :
-         isLive ? "Live-Daten geladen – aktuell aus dem Netz" :
-         news.length + " Nachrichten · Gespeicherte Daten"}
+        {loading ? "Lade Nachrichten von bruehl-baden.de, ffw-bruehl.de..." :
+         isLive ? "Live von: " + sources.join(", ") + " (" + news.length + " Meldungen)" :
+         news.length + " Nachrichten · Letzte manuelle Aktualisierung"}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
         {filtered.length === 0 ? (
