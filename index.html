@@ -656,10 +656,10 @@ const AktuellView = ({ filter, searchTerm }) => {
     return dateB - dateA;
   });
 
-  // Nur Nachrichten der letzten 90 Tage anzeigen
-  var cutoff = Date.now() - (90 * 24 * 60 * 60 * 1000);
+  // Keine Nachrichten aus der Zukunft anzeigen (Veranstaltungen gehoeren in den Kalender)
+  var today = Date.now();
   filtered = filtered.filter(function(n) {
-    return new Date(n.date || "2026-01-01").getTime() > cutoff;
+    return new Date(n.date || "2026-01-01").getTime() <= today + (7 * 24 * 60 * 60 * 1000);
   });
 
   return (
