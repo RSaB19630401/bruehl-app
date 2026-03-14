@@ -643,9 +643,23 @@ const AktuellView = ({ filter, searchTerm }) => {
     });
   }, []);
 
-  const filtered = news.filter(function(n) {
+  // Filtern nach Kategorie und Suchbegriff
+  var filtered = news.filter(function(n) {
     return (filter === "all" || n.category === filter) &&
     (!searchTerm || n.title.toLowerCase().includes(searchTerm.toLowerCase()) || (n.summary && n.summary.toLowerCase().includes(searchTerm.toLowerCase())))
+  });
+
+  // Nach Datum sortieren (neueste zuerst)
+  filtered.sort(function(a, b) {
+    var dateA = new Date(a.date || "2000-01-01").getTime();
+    var dateB = new Date(b.date || "2000-01-01").getTime();
+    return dateB - dateA;
+  });
+
+  // Nur Nachrichten der letzten 90 Tage anzeigen
+  var cutoff = Date.now() - (90 * 24 * 60 * 60 * 1000);
+  filtered = filtered.filter(function(n) {
+    return new Date(n.date || "2026-01-01").getTime() > cutoff;
   });
 
   return (
@@ -659,13 +673,13 @@ const AktuellView = ({ filter, searchTerm }) => {
       }}>
         <span style={{ fontSize: 14 }}>{loading ? "⏳" : isLive ? "🟢" : "📰"}</span>
         {loading ? "Lade Nachrichten von bruehl-baden.de, ffw-bruehl.de..." :
-         isLive ? "Live von: " + sources.join(", ") + " (" + news.length + " Meldungen)" :
-         news.length + " Nachrichten · Letzte manuelle Aktualisierung"}
+         isLive ? "Live von: " + sources.join(", ") + " (" + filtered.length + " Meldungen)" :
+         filtered.length + " Nachrichten · Letzte manuelle Aktualisierung"}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
         {filtered.length === 0 ? (
           <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 40, color: COLORS.textMuted }}>
-            Keine Nachrichten in dieser Kategorie gefunden.
+            Keine aktuellen Nachrichten in dieser Kategorie gefunden.
           </div>
         ) : (
           filtered.map(function(item) { return React.createElement(NewsCard, { key: item.id, item: item }); })
