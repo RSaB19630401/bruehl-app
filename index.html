@@ -59,31 +59,12 @@
   <script type="text/babel" data-presets="react">
     const { useState, useEffect, useCallback, useRef } = React;
 
-// ==========================================
-// BRÜHL (BADEN) - HEIMAT-APP
-// PWA mit historischen & aktuellen Daten
-// Worker v5 mit 9 Quellen
-// ==========================================
-
 const COLORS = {
-  primary: "#1a365d",
-  primaryLight: "#2c5282",
-  accent: "#c69c2e",
-  accentLight: "#d4a843",
-  bg: "#f7f5f0",
-  bgCard: "#ffffff",
-  bgDark: "#0f1923",
-  text: "#1a202c",
-  textMuted: "#64748b",
-  border: "#e2ddd4",
-  success: "#2f855a",
-  danger: "#c53030",
-  info: "#2b6cb0",
+  primary: "#1a365d", primaryLight: "#2c5282", accent: "#c69c2e", accentLight: "#d4a843",
+  bg: "#f7f5f0", bgCard: "#ffffff", bgDark: "#0f1923", text: "#1a202c",
+  textMuted: "#64748b", border: "#e2ddd4", success: "#2f855a", danger: "#c53030", info: "#2b6cb0",
 };
 
-// ==========================================
-// QUELLEN - erweitert für Worker v5
-// ==========================================
 const SOURCES = {
   gemeinde: { name: "Gemeinde Brühl", color: "#2c5282", icon: "🏛️", url: "https://www.bruehl-baden.de" },
   rundschau: { name: "Brühler Rundschau", color: "#8b5e3c", icon: "📰", url: "https://www.bruehl-baden.de/rundschau/" },
@@ -103,53 +84,33 @@ const SOURCES = {
 };
 
 const CATEGORIES = [
-  { id: "all", name: "Alle", icon: "🏠" },
-  { id: "politik", name: "Politik & Verwaltung", icon: "🏛️" },
-  { id: "kultur", name: "Kultur & Freizeit", icon: "🎭" },
-  { id: "vereine", name: "Vereine & Ehrenamt", icon: "🤝" },
-  { id: "feuerwehr", name: "Feuerwehr & Sicherheit", icon: "🚒" },
-  { id: "verkehr", name: "Verkehr & Infrastruktur", icon: "🚗" },
-  { id: "bildung", name: "Bildung & Schule", icon: "📚" },
-  { id: "umwelt", name: "Umwelt & Natur", icon: "🌿" },
-  { id: "sport", name: "Sport", icon: "⚽" },
-  { id: "wirtschaft", name: "Wirtschaft & Gewerbe", icon: "💼" },
+  { id: "all", name: "Alle", icon: "🏠" }, { id: "politik", name: "Politik & Verwaltung", icon: "🏛️" },
+  { id: "kultur", name: "Kultur & Freizeit", icon: "🎭" }, { id: "vereine", name: "Vereine & Ehrenamt", icon: "🤝" },
+  { id: "feuerwehr", name: "Feuerwehr & Sicherheit", icon: "🚒" }, { id: "verkehr", name: "Verkehr & Infrastruktur", icon: "🚗" },
+  { id: "bildung", name: "Bildung & Schule", icon: "📚" }, { id: "umwelt", name: "Umwelt & Natur", icon: "🌿" },
+  { id: "sport", name: "Sport", icon: "⚽" }, { id: "wirtschaft", name: "Wirtschaft & Gewerbe", icon: "💼" },
 ];
 
 const BruehlWappen = ({ size = 44 }) => (
   <svg width={size} height={size} viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="shieldGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#2c5ea0" />
-        <stop offset="100%" stopColor="#1a3d6d" />
-      </linearGradient>
-      <linearGradient id="metalGrad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#f0f0f0" />
-        <stop offset="40%" stopColor="#ffffff" />
-        <stop offset="100%" stopColor="#d0d0d0" />
-      </linearGradient>
+      <linearGradient id="shieldGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2c5ea0" /><stop offset="100%" stopColor="#1a3d6d" /></linearGradient>
+      <linearGradient id="metalGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#f0f0f0" /><stop offset="40%" stopColor="#ffffff" /><stop offset="100%" stopColor="#d0d0d0" /></linearGradient>
     </defs>
     <path d="M5,5 L95,5 L95,70 Q95,95 50,115 Q5,95 5,70 Z" fill="url(#shieldGrad)" stroke="#c69c2e" strokeWidth="3"/>
     <path d="M8,8 L92,8 L92,69 Q92,92 50,112 Q8,92 8,69 Z" fill="none" stroke="#c69c2e" strokeWidth="0.5" opacity="0.4"/>
     <g transform="translate(50,58) scale(0.85)">
-      <path d="M0,-38 C-22,-38 -34,-22 -34,0 C-34,14 -28,26 -22,34 L-14,34 C-20,26 -24,14 -24,0 C-24,-16 -14,-28 0,-28 C14,-28 24,-16 24,0 C24,14 20,26 14,34 L22,34 C28,26 34,14 34,0 C34,-22 22,-38 0,-38 Z" 
-            fill="url(#metalGrad)" stroke="#b0b0b0" strokeWidth="1"/>
-      <circle cx="-26" cy="8" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
-      <circle cx="26" cy="8" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
-      <circle cx="-20" cy="26" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
-      <circle cx="20" cy="26" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
-      <circle cx="-30" cy="-10" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
-      <circle cx="30" cy="-10" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
-      <circle cx="-22" cy="-28" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
-      <circle cx="22" cy="-28" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
+      <path d="M0,-38 C-22,-38 -34,-22 -34,0 C-34,14 -28,26 -22,34 L-14,34 C-20,26 -24,14 -24,0 C-24,-16 -14,-28 0,-28 C14,-28 24,-16 24,0 C24,14 20,26 14,34 L22,34 C28,26 34,14 34,0 C34,-22 22,-38 0,-38 Z" fill="url(#metalGrad)" stroke="#b0b0b0" strokeWidth="1"/>
+      <circle cx="-26" cy="8" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/><circle cx="26" cy="8" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
+      <circle cx="-20" cy="26" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/><circle cx="20" cy="26" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
+      <circle cx="-30" cy="-10" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/><circle cx="30" cy="-10" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
+      <circle cx="-22" cy="-28" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/><circle cx="22" cy="-28" r="3" fill="#2c5ea0" stroke="#b0b0b0" strokeWidth="0.5"/>
     </g>
   </svg>
 );
 
-// ==========================================
-// VEREINE (verifiziert)
-// ==========================================
 const VEREINE_DATA = [
-  { name: "FV 1918 Brühl e.V.", category: "sport", type: "Fußball, Leichtathletik, Kampfsport", founded: 1918, address: "Ketscher Str. 65", url: "https://fv-bruehl.de", colors: "blau-schwarz", desc: "Traditionsverein mit Fußball, Leichtathletik und Kampfsport. Heimat von Maurizio Gaudino." },
+  { name: "FV 1918 Brühl e.V.", category: "sport", type: "Fußball, Leichtathletik, Kampfsport", founded: 1918, address: "Ketscher Str. 65", url: "https://fv-bruehl.de", desc: "Traditionsverein mit Fußball, Leichtathletik und Kampfsport. Heimat von Maurizio Gaudino." },
   { name: "TV Brühl 1912 e.V.", category: "sport", type: "Turnen, Handball, Gymnastik, Yoga", founded: 1912, address: "Wiesenplätz 2", url: "https://xn--tvbrhl-6ya.de/", desc: "Größter Verein Brühls mit ca. 1.600 Mitgliedern. Handball (SG Brühl/Ketsch), Turnen, Yoga, Walking und mehr." },
   { name: "SV Rohrhof", category: "sport", type: "Fußball", founded: null, address: "Rohrhof", url: null, desc: "Sportverein im Ortsteil Rohrhof mit Fußball und Breitensport." },
   { name: "Angelsportverein 1965 Brühl e.V.", category: "sport", type: "Angelsport", founded: 1965, address: "Weidweg 2", url: "http://www.asv65.de", desc: "Aktiver Angelverein am Rhein mit Vereinsheim, Familientagen und Räucherfischverkauf." },
@@ -159,141 +120,143 @@ const VEREINE_DATA = [
   { name: "Musikverein Brühl e.V.", category: "kultur", type: "Blasmusik", founded: null, address: "Friedrichstr. 5", url: null, desc: "Traditioneller Musikverein mit Blasorchester und Jugendausbildung." },
   { name: "Chorgemeinschaft Brühl/Baden", category: "kultur", type: "Gesang", founded: null, address: "Brühl", url: null, desc: "Gemischter Chor mit regelmäßigen Auftritten bei Gemeindeveranstaltungen." },
   { name: "Spielmannszug der Feuerwehr Brühl", category: "kultur", type: "Spielmannszug", founded: null, address: "Feuerwehr Brühl", url: "https://ffw-bruehl.de", desc: "Seit über 100 Jahren aktiv. Begleitet Feste, Umzüge und Feuerwehrveranstaltungen." },
-  { name: "Verein für Heimat- und Brauchtumspflege Brühl/Rohrhof e.V.", category: "kultur", type: "Heimatpflege, Museum", founded: 1995, address: "Erzbergerstr. 45", url: "http://www.heimatverein-bruehl.de", desc: "Betreibt das Heimatmuseum 'Rheingold' mit Schwerpunkt Luftschiffbau Schütte-Lanz und Ziegeleien. Gibt die 'Ortsschell' heraus." },
+  { name: "Verein für Heimat- und Brauchtumspflege Brühl/Rohrhof e.V.", category: "kultur", type: "Heimatpflege, Museum", founded: 1995, address: "Erzbergerstr. 45", url: "http://www.heimatverein-bruehl.de", desc: "Betreibt das Heimatmuseum 'Rheingold' mit Schwerpunkt Luftschiffbau Schütte-Lanz und Ziegeleien." },
   { name: "CV 'Die Rohrhöfer Göggel' e.V.", category: "kultur", type: "Karneval", founded: null, address: "Rohrhof", url: null, desc: "Karnevalsverein aus Rohrhof. Veranstaltet die große Prunksitzung und Seniorensitzung." },
   { name: "Kollerkrotten Brühl", category: "kultur", type: "Karneval", founded: null, address: "Brühl", url: "http://www.kollerkrotten-bruehl.de", desc: "Brühler Karnevalsverein, benannt nach der Kollerinsel." },
   { name: "DRK Ortsverein Brühl", category: "vereine", type: "Hilfsorganisation", founded: null, address: "Brühl", url: null, desc: "Deutsches Rotes Kreuz – Blutspendetermine, Erste-Hilfe-Kurse und Rettungsdienst-Ausbildung." },
-  { name: "Sternenglück für Kinder e.V.", category: "vereine", type: "Kinderhilfe, Verein", founded: null, address: "Brühl", url: null, desc: "Unterstützt bedürftige Brühler und Rohrhofer Kinder: gesundes Frühstück im Hort an der Jahnschule, Schwimmkurse mit SV Hellas, Schulausstattung, Klassenfahrten. Finanziert durch Glückssterne-Aktion des Gewerbevereins." },
+  { name: "Sternenglück für Kinder e.V.", category: "vereine", type: "Kinderhilfe, Verein", founded: null, address: "Brühl", url: null, desc: "Unterstützt bedürftige Brühler und Rohrhofer Kinder: gesundes Frühstück im Hort an der Jahnschule, Schwimmkurse, Schulausstattung, Klassenfahrten." },
   { name: "VdK Ortsverband Brühl", category: "vereine", type: "Sozialverband", founded: null, address: "Brühl", url: null, desc: "Sozialverband VdK – Beratung und Interessenvertretung in sozialen Fragen." },
-  { name: "Freiwillige Feuerwehr Brühl", category: "feuerwehr", type: "Feuerwehr", founded: 1900, address: "Am Schrankenbuckel 9", url: "https://ffw-bruehl.de", desc: "125 Jahre Feuerwehr (Jubiläum 2025). Mehrere Abteilungen, Jugendfeuerwehr, Spielmannszug und Seelsorge-Team." },
+  { name: "Freiwillige Feuerwehr Brühl", category: "feuerwehr", type: "Feuerwehr", founded: 1900, address: "Am Schrankenbuckel 9", url: "https://ffw-bruehl.de", desc: "125 Jahre Feuerwehr (Jubiläum 2025). Mehrere Abteilungen, Jugendfeuerwehr, Spielmannszug." },
   { name: "Katholische Kirchengemeinde", category: "vereine", type: "Kirchliche Vereine", founded: null, address: "Kirchenstr. 15", url: null, desc: "Kirchliche Vereine und Gruppen der katholischen Gemeinde St. Sebastian/Schutzengelkirche." },
-  { name: "Evangelische Kirchengemeinde", category: "vereine", type: "Kirchliche Vereine", founded: null, address: "Brühl", url: null, desc: "Evangelische Gemeinde im Kirchenbezirk Südliche Kurpfalz. Gemeindezentrum seit 1996." },
+  { name: "Evangelische Kirchengemeinde", category: "vereine", type: "Kirchliche Vereine", founded: null, address: "Brühl", url: null, desc: "Evangelische Gemeinde im Kirchenbezirk Südliche Kurpfalz." },
   { name: "Obst- und Gartenbauverein", category: "umwelt", type: "Natur, Garten", founded: null, address: "Pferchstückerweg", url: null, desc: "Pflege von Streuobstwiesen, Gartenberatung und Naturschutzaktivitäten." },
-  { name: "CDU Brühl", category: "politik", type: "Partei (6 Sitze im Gemeinderat)", founded: null, address: "Brühl", url: null, desc: "Stärkste Fraktion im Gemeinderat 2024 mit 6 Sitzen. Zusammen mit FDP als CDU/FDP-Fraktion aktiv." },
-  { name: "SPD Ortsverein Brühl-Rohrhof", category: "politik", type: "Partei (5 Sitze im Gemeinderat)", founded: null, address: "Brühl", url: "https://www.spd-bruehl-rohrhof.de", desc: "5 Sitze im Gemeinderat. Bürgermeister Dr. Ralf Göck ist SPD-Mitglied." },
-  { name: "Freie Wähler Brühl-Rohrhof e.V.", category: "politik", type: "Wählervereinigung (4 Sitze im Gemeinderat)", founded: null, address: "Brühl", url: "http://fw-bruehl-rohrhof.de", desc: "Eingetragener Verein, keine Partei. 4 Sitze im Gemeinderat. Unabhängig, ohne Parteiprogramm." },
-  { name: "Grüne Liste Brühl", category: "politik", type: "Wählervereinigung (3 Sitze im Gemeinderat)", founded: null, address: "Brühl", url: "http://www.grueneliste-bruehl.de", desc: "3 Sitze im Gemeinderat. Schwerpunkt Umwelt und Klimaschutz." },
-  { name: "AfD Brühl", category: "politik", type: "Partei (3 Sitze im Gemeinderat)", founded: null, address: "Brühl", url: null, desc: "Seit der Gemeinderatswahl 2024 erstmals im Gemeinderat vertreten mit 3 Sitzen." },
-  { name: "FDP Brühl", category: "politik", type: "Partei (1 Sitz im Gemeinderat)", founded: null, address: "Brühl", url: null, desc: "Seit 2024 erstmals im Gemeinderat mit 1 Sitz. Bildet mit der CDU die CDU/FDP-Fraktion." },
-  { name: "Gewerbeverein Brühl und Rohrhof e.V.", category: "wirtschaft", type: "Gewerbe", founded: null, address: "Mannheimer Str. 19", url: "https://www.gewerbeverein-bruehl-rohrhof.de", desc: "Vertretung der lokalen Unternehmen. Organisiert Candlelight Shopping, Zunftbaumfest, Gewerbe- und Leistungsschau." },
+  { name: "CDU Brühl", category: "politik", type: "Partei (6 Sitze)", founded: null, address: "Brühl", url: null, desc: "Stärkste Fraktion im Gemeinderat 2024. CDU/FDP-Fraktion." },
+  { name: "SPD Ortsverein Brühl-Rohrhof", category: "politik", type: "Partei (5 Sitze)", founded: null, address: "Brühl", url: "https://www.spd-bruehl-rohrhof.de", desc: "Bürgermeisterpartei." },
+  { name: "Freie Wähler Brühl-Rohrhof e.V.", category: "politik", type: "Wählervereinigung (4 Sitze)", founded: null, address: "Brühl", url: "http://fw-bruehl-rohrhof.de", desc: "Eingetragener Verein, unabhängig." },
+  { name: "Grüne Liste Brühl", category: "politik", type: "Wählervereinigung (3 Sitze)", founded: null, address: "Brühl", url: "http://www.grueneliste-bruehl.de", desc: "Schwerpunkt Umwelt und Klimaschutz." },
+  { name: "AfD Brühl", category: "politik", type: "Partei (3 Sitze)", founded: null, address: "Brühl", url: null, desc: "Seit 2024 erstmals im Gemeinderat." },
+  { name: "FDP Brühl", category: "politik", type: "Partei (1 Sitz)", founded: null, address: "Brühl", url: null, desc: "Seit 2024 erstmals im Gemeinderat. CDU/FDP-Fraktion." },
+  { name: "Gewerbeverein Brühl und Rohrhof e.V.", category: "wirtschaft", type: "Gewerbe", founded: null, address: "Mannheimer Str. 19", url: "https://www.gewerbeverein-bruehl-rohrhof.de", desc: "Vertretung der lokalen Unternehmen. Candlelight Shopping, Zunftbaumfest." },
 ];
 
 // ==========================================
-// FALLBACK NEWS - aktualisiert März 2026
+// SERVICES-DATEN (verifiziert via Web)
+// ==========================================
+var NOTFALL_DATA = [
+  { name: "Feuerwehr / Rettungsdienst", nummer: "112", icon: "🚒", desc: "Europaweiter Notruf", color: "#e53e3e" },
+  { name: "Polizei-Notruf", nummer: "110", icon: "🚔", desc: "Polizei-Notruf Deutschland", color: "#2b6cb0" },
+  { name: "Polizeirevier Schwetzingen", nummer: "06202 288-0", icon: "👮", desc: "Zuständiges Polizeirevier für Brühl", color: "#2c5282" },
+  { name: "Giftnotruf (Freiburg)", nummer: "0761 19240", icon: "☠️", desc: "Vergiftungsinformationszentrale, 24h", color: "#9b2c2c" },
+  { name: "Apotheken-Notdienst", nummer: "0800 0022833", icon: "💊", desc: "Kostenlose Auskunft dienstbereite Apotheken", color: "#38a169" },
+  { name: "Ärztlicher Bereitschaftsdienst", nummer: "116 117", icon: "🩺", desc: "Außerhalb der Praxisöffnungszeiten", color: "#805ad5" },
+  { name: "DRK Ortsverein Brühl", nummer: "06202 73233", icon: "🏥", desc: "Deutsches Rotes Kreuz Brühl", color: "#c53030" },
+  { name: "Rathaus Brühl", nummer: "06202 2003-0", icon: "🏛️", desc: "Gemeindeverwaltung, Hauptstr. 1", color: "#1a365d" },
+];
+
+var SCHULEN_DATA = [
+  { name: "Jahnschule (Grundschule)", address: "Kirchenstraße 21, 68782 Brühl", telefon: "06202 2003-730", url: "https://jahnschule-bruehl.de", desc: "Grundschule mit Hort. Bildungshausstandort im Verbund mit Kindergärten St. Bernhard und Heiligenhag." },
+  { name: "Schillerschule (Grundschule)", address: "Ormessonstraße 5, 68782 Brühl", telefon: "06202 978200", url: "https://www.bruehl-baden.de/schillerschule/", desc: "Grundschule mit Außenstelle Rohrhof. Modellstandort für Kinderbildungszentrum Baden-Württemberg." },
+  { name: "Schillerschule Rohrhof", address: "Schulstraße 9, 68782 Brühl/Rohrhof", telefon: "06202 73390", url: "https://www.bruehl-baden.de/schillerschule/", desc: "Außenstelle der Schillerschule im Ortsteil Rohrhof." },
+  { name: "Marion-Dönhoff-Realschule", address: "Wiesenplätzweg 7, 68782 Brühl", telefon: "06202 70660", url: "https://www.marion-doenhoff-rs.de/", desc: "Realschule des Schulverbands Brühl/Ketsch. Ca. 700 Schüler, 27 Klassen. Schule ohne Rassismus." },
+];
+
+var KINDERGARTEN_DATA = [
+  { name: "Kath. Kindergarten St. Bernhard", address: "Kirchenstraße 16, 68782 Brühl", telefon: "06202 73844", traeger: "Kath. Kirchengemeinde", desc: "Katholischer Kindergarten im Bildungshaus-Verbund mit der Jahnschule." },
+  { name: "Ev. Kindergarten Heiligenhag", address: "Kirchenstraße 5a, 68782 Brühl", telefon: "06202 73844", traeger: "Ev. Kirchengemeinde", desc: "Evangelischer Kindergarten im Bildungshaus-Verbund mit der Jahnschule." },
+  { name: "Haus der Kinder (Gemeinde)", address: "Nibelungenstraße 12, 68782 Brühl", telefon: "06202 72882", traeger: "Gemeinde Brühl", desc: "Kommunale Kindertageseinrichtung der Gemeinde Brühl." },
+  { name: "Sonnenschein-Kindergarten", address: "an der Schillerschule, 68782 Brühl", telefon: "06202 978200", traeger: "Gemeinde Brühl", desc: "Für Kinder ab 1 Jahr bis Schuleintritt. Kooperation mit der Schillerschule." },
+];
+
+var UNTERNEHMEN_DATA = [
+  { name: "HIMA Paul Hildebrandt GmbH", branche: "Sicherheitsautomatisierung", address: "Albert-Bassermann-Str. 28, 68782 Brühl", telefon: "06202 709-0", url: "https://www.hima.com", desc: "Weltmarktführer für sicherheitsgerichtete Automatisierungslösungen. Familienunternehmen seit 1908, über 1.050 Mitarbeitende weltweit." },
+  { name: "Scheck-in Center Brühl", branche: "Lebensmitteleinzelhandel (EDEKA)", address: "Mannheimer Landstraße 2, 68782 Brühl", telefon: "06202 128860", url: "https://www.scheck-in-center.de/maerkte/bruehl/", desc: "Eröffnet Sept. 2025, ca. 7.000 m² Verkaufsfläche, ~100.000 Artikel. Einer der modernsten EDEKA-Märkte." },
+  { name: "Gewerbeverein Brühl und Rohrhof e.V.", branche: "Interessenvertretung Gewerbe", address: "Mannheimer Str. 19, 68782 Brühl", telefon: null, url: "https://www.gewerbeverein-bruehl-rohrhof.de", desc: "Organisiert Candlelight Shopping, Zunftbaumfest, Glückssterne-Aktion und Gewerbeschau." },
+  { name: "Apotheke im Scheck-in Center", branche: "Apotheke", address: "Mannheimer Landstr. 2, 68782 Brühl", telefon: "06202 703434", url: "https://www.apotheken-stoeck.de", desc: "Filialverbund Dr. Matthias Stoeck. Mo–Sa 8–20 Uhr." },
+];
+
+// ==========================================
+// FALLBACK NEWS
 // ==========================================
 var FALLBACK_NEWS = [
-  { id: 1, title: "40. Brühler Straßenkerwe kehrt mit neuem Konzept zurück", date: "2026-03-20", source: "schwetzinger", category: "kultur", summary: "Die Brühler Straßenkerwe feiert ihr 40. Jubiläum und verspricht ein attraktives Volksfest mit traditionellem Charme und neuen Elementen.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
-  { id: 2, title: "Heini-Langlotz-Lauf 2026 mit über 1.000 Läufern", date: "2026-03-22", source: "schwetzinger", category: "sport", summary: "Der 18. Heini-Langlotz-Lauf war ein großer Erfolg. Kinder, Jugendliche und Erwachsene feierten gemeinsam eine fröhliche Laufparty.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
-  { id: 3, title: "TV Brühl Handball: Sieg in Leutershausen", date: "2026-03-15", source: "tv_bruehl", category: "sport", summary: "Landesliga Männer: Leutershausen 3 – TV Brühl 30:31. Eine enge Partie mit dem besseren Ende für die Brühler.", url: "https://xn--tvbrhl-6ya.de/" },
-  { id: 4, title: "FV Brühl gewinnt in Viernheim", date: "2026-03-16", source: "fv_bruehl", category: "sport", summary: "Fußball-Landesliga: TSV Amicitia Viernheim – FV Brühl 0:2. Dank Leistungssteigerung in der zweiten Halbzeit.", url: "https://fv-bruehl.de/" },
-  { id: 5, title: "Neuer Sponsor für FV 1918 Brühl", date: "2026-03-10", source: "fv_bruehl", category: "sport", summary: "Der FVB begrüßt Broe & Eickmeyer Hörakustik am Lindenplatz als neuen Partner.", url: "https://fv-bruehl.de/" },
-  { id: 6, title: "Hima-Group expandiert nach Lateinamerika", date: "2026-03-05", source: "schwetzinger", category: "wirtschaft", summary: "Der Sicherheitsexperte Hima-Group mit Hauptsitz in Brühl eröffnet neue Niederlassungen in Lima und Bogotá.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
-  { id: 7, title: "Tag der Musik in der Brühler Festhalle", date: "2026-03-01", source: "schwetzinger", category: "kultur", summary: "Der Tag der Musik präsentierte die Vielfalt junger Talente der Klangfabrik. Ein Event voller Energie und musikalischer Highlights.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
-  { id: 8, title: "Oliver de Andrade neuer 2. Vorsitzender des Heimatvereins", date: "2026-03-08", source: "schwetzinger", category: "kultur", summary: "Oliver de Andrade übernimmt den Posten des zweiten Vorsitzenden beim Heimatverein Brühl.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
-  { id: 9, title: "Gemeinderat beschließt Investition in Abwasserentsorgung", date: "2026-02-28", source: "schwetzinger", category: "politik", summary: "Brühl plant eine Investition von über 452.000 Euro in die Modernisierung der Abwasserentsorgung.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
-  { id: 10, title: "MVV Energie fördert TV Brühl Handball", date: "2026-02-20", source: "tv_bruehl", category: "sport", summary: "Die MVV Energie AG hat erneut fünf Vereine mit jeweils 2.000 Euro gefördert – darunter den TV Brühl.", url: "https://xn--tvbrhl-6ya.de/" },
-  { id: 11, title: "Schulschwimmfest mit 332 Teilnehmern", date: "2026-02-25", source: "schwetzinger", category: "bildung", summary: "Das Brühler Schulschwimmfest feierte einen neuen Rekord im Freistilschwimmen. 332 Grundschüler nahmen teil.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
-  { id: 12, title: "Fahrzeugbrand am Einkaufszentrum", date: "2026-02-12", source: "feuerwehr", category: "feuerwehr", summary: "Ein Fahrzeug geriet auf dem Parkplatz des Einkaufszentrums in Brand. Die Feuerwehr löschte.", url: "https://ffw-bruehl.de/" },
-  { id: 13, title: "Brandmeldeanlage Schillerschule ausgelöst", date: "2026-02-12", source: "feuerwehr", category: "feuerwehr", summary: "Sabotagealarm an der Schillerschule. Der Hausmeister konnte die Situation klären.", url: "https://ffw-bruehl.de/" },
-  { id: 14, title: "Erste-Hilfe-Fortbildung der Feuerwehr", date: "2026-01-24", source: "feuerwehr", category: "feuerwehr", summary: "Alle Abteilungen der Feuerwehr Brühl frischten ihre Erste-Hilfe-Kenntnisse auf.", url: "https://ffw-bruehl.de/" },
-  { id: 15, title: "FV Brühl dreht Spiel gegen Ketsch", date: "2026-02-15", source: "fv_bruehl", category: "sport", summary: "Fußball-Landesliga: FV Brühl – Spvgg Ketsch 2:1. Zwei späte Tore brachten den Derbysieg.", url: "https://fv-bruehl.de/" },
+  { id: "fb-1", title: "40. Brühler Straßenkerwe kehrt mit neuem Konzept zurück", date: "2026-03-20", source: "schwetzinger", category: "kultur", summary: "Die Brühler Straßenkerwe feiert ihr 40. Jubiläum.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
+  { id: "fb-2", title: "Heini-Langlotz-Lauf 2026 mit über 1.000 Läufern", date: "2026-03-22", source: "schwetzinger", category: "sport", summary: "Der 18. Heini-Langlotz-Lauf war ein großer Erfolg.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
+  { id: "fb-3", title: "TV Brühl Handball: Sieg in Leutershausen", date: "2026-03-15", source: "tv_bruehl", category: "sport", summary: "Landesliga Männer: Leutershausen 3 – TV Brühl 30:31.", url: "https://xn--tvbrhl-6ya.de/" },
+  { id: "fb-4", title: "FV Brühl gewinnt in Viernheim", date: "2026-03-16", source: "fv_bruehl", category: "sport", summary: "Fußball-Landesliga: TSV Amicitia Viernheim – FV Brühl 0:2.", url: "https://fv-bruehl.de/" },
+  { id: "fb-5", title: "Neuer Sponsor für FV 1918 Brühl", date: "2026-03-10", source: "fv_bruehl", category: "sport", summary: "FVB begrüßt Broe & Eickmeyer Hörakustik als neuen Partner.", url: "https://fv-bruehl.de/" },
+  { id: "fb-6", title: "Hima-Group expandiert nach Lateinamerika", date: "2026-03-05", source: "schwetzinger", category: "wirtschaft", summary: "Neue Niederlassungen in Lima und Bogotá.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
+  { id: "fb-7", title: "Tag der Musik in der Brühler Festhalle", date: "2026-03-01", source: "schwetzinger", category: "kultur", summary: "Vielfalt junger Talente der Klangfabrik.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
+  { id: "fb-8", title: "Oliver de Andrade neuer 2. Vorsitzender des Heimatvereins", date: "2026-03-08", source: "schwetzinger", category: "kultur", summary: "Übernahme des Postens beim Heimatverein Brühl.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
+  { id: "fb-9", title: "Gemeinderat beschließt Investition in Abwasserentsorgung", date: "2026-02-28", source: "schwetzinger", category: "politik", summary: "Über 452.000 Euro für Modernisierung.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
+  { id: "fb-10", title: "MVV Energie fördert TV Brühl Handball", date: "2026-02-20", source: "tv_bruehl", category: "sport", summary: "2.000 Euro Förderung für den TV Brühl.", url: "https://xn--tvbrhl-6ya.de/" },
+  { id: "fb-11", title: "Schulschwimmfest mit 332 Teilnehmern", date: "2026-02-25", source: "schwetzinger", category: "bildung", summary: "Neuer Rekord im Freistilschwimmen.", url: "https://www.schwetzinger-zeitung.de/orte/bruehl.html" },
+  { id: "fb-12", title: "Fahrzeugbrand am Einkaufszentrum", date: "2026-02-12", source: "feuerwehr", category: "feuerwehr", summary: "Feuerwehr löschte Brand auf Parkplatz.", url: "https://ffw-bruehl.de/" },
+  { id: "fb-13", title: "Brandmeldeanlage Schillerschule ausgelöst", date: "2026-02-12", source: "feuerwehr", category: "feuerwehr", summary: "Sabotagealarm – Hausmeister konnte klären.", url: "https://ffw-bruehl.de/" },
+  { id: "fb-14", title: "Erste-Hilfe-Fortbildung der Feuerwehr", date: "2026-01-24", source: "feuerwehr", category: "feuerwehr", summary: "Alle Abteilungen frischten Kenntnisse auf.", url: "https://ffw-bruehl.de/" },
+  { id: "fb-15", title: "FV Brühl dreht Spiel gegen Ketsch", date: "2026-02-15", source: "fv_bruehl", category: "sport", summary: "FV Brühl – Spvgg Ketsch 2:1. Derbysieg.", url: "https://fv-bruehl.de/" },
 ];
 
-var CURRENT_NEWS = FALLBACK_NEWS;
-
 // ==========================================
-// LIVE-DATEN VOM CLOUDFLARE WORKER v5
+// LIVE-DATEN (Bug-Fix: Cache + Dedup)
 // ==========================================
 var WORKER_URL = "https://white-recipe-9a06.rsab1963.workers.dev";
+var _liveNewsCache = null;
+var _liveNewsFetching = false;
+var _liveNewsListeners = [];
 
-async function fetchLiveNews() {
-  try {
-    var response = await fetch(WORKER_URL);
-    var data = await response.json();
+function fetchLiveNews() {
+  if (_liveNewsCache) return Promise.resolve(_liveNewsCache);
+  if (_liveNewsFetching) return new Promise(function(resolve) { _liveNewsListeners.push(resolve); });
+  _liveNewsFetching = true;
+  return fetch(WORKER_URL).then(function(r) { return r.json(); }).then(function(data) {
     if (data.news && Array.isArray(data.news) && data.news.length > 0) {
-      return { news: data.news, sources: data.sources || [], failed: data.failed || [] };
+      var seen = {}; var unique = [];
+      for (var i = 0; i < data.news.length; i++) {
+        var key = (data.news[i].title || "").toLowerCase().trim();
+        if (!seen[key]) { seen[key] = true; data.news[i].id = "live-" + i; unique.push(data.news[i]); }
+      }
+      _liveNewsCache = { news: unique, sources: data.sources || [], failed: data.failed || [] };
     }
-  } catch(e) {
+    _liveNewsFetching = false;
+    _liveNewsListeners.forEach(function(fn) { fn(_liveNewsCache); }); _liveNewsListeners = [];
+    return _liveNewsCache;
+  }).catch(function(e) {
     console.log("Live-Daten nicht verfuegbar:", e.message);
-  }
-  return null;
+    _liveNewsFetching = false;
+    _liveNewsListeners.forEach(function(fn) { fn(null); }); _liveNewsListeners = [];
+    return null;
+  });
 }
 
 // ==========================================
 // COMPONENTS
 // ==========================================
-
 const LoadingDots = () => (
   <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "center", padding: 20 }}>
-    {[0, 1, 2].map(i => (
-      <div key={i} style={{
-        width: 8, height: 8, borderRadius: "50%", background: COLORS.accent,
-        animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
-      }} />
-    ))}
-    <style>{`@keyframes pulse { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.2); } }`}</style>
+    {[0, 1, 2].map(i => (<div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: COLORS.accent, animation: "pulse 1.2s ease-in-out " + (i * 0.2) + "s infinite" }} />))}
+    <style>{"@keyframes pulse { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.2); } }"}</style>
   </div>
 );
 
 const SourceBadge = ({ sourceId, small }) => {
   const src = SOURCES[sourceId];
-  if (!src) return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: 4,
-      padding: small ? "1px 6px" : "2px 10px",
-      borderRadius: 20, fontSize: small ? 10 : 11, fontWeight: 600,
-      background: "#71809615", color: "#718096", border: "1px solid #71809630",
-      whiteSpace: "nowrap",
-    }}>
-      📰 {sourceId}
-    </span>
-  );
-  return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: 4,
-      padding: small ? "1px 6px" : "2px 10px",
-      borderRadius: 20, fontSize: small ? 10 : 11, fontWeight: 600,
-      background: `${src.color}15`, color: src.color, border: `1px solid ${src.color}30`,
-      whiteSpace: "nowrap",
-    }}>
-      <span style={{ fontSize: small ? 10 : 12 }}>{src.icon}</span> {src.name}
-    </span>
-  );
+  if (!src) return (<span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: small ? "1px 6px" : "2px 10px", borderRadius: 20, fontSize: small ? 10 : 11, fontWeight: 600, background: "#71809615", color: "#718096", border: "1px solid #71809630", whiteSpace: "nowrap" }}>📰 {sourceId}</span>);
+  return (<span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: small ? "1px 6px" : "2px 10px", borderRadius: 20, fontSize: small ? 10 : 11, fontWeight: 600, background: src.color + "15", color: src.color, border: "1px solid " + src.color + "30", whiteSpace: "nowrap" }}><span style={{ fontSize: small ? 10 : 12 }}>{src.icon}</span> {src.name}</span>);
 };
 
 const CategoryBadge = ({ categoryId }) => {
   const cat = CATEGORIES.find(c => c.id === categoryId);
   if (!cat) return null;
-  return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: 3,
-      padding: "2px 8px", borderRadius: 12, fontSize: 10, fontWeight: 500,
-      background: "#f0f0f0", color: "#555",
-    }}>
-      {cat.icon} {cat.name}
-    </span>
-  );
+  return (<span style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "2px 8px", borderRadius: 12, fontSize: 10, fontWeight: 500, background: "#f0f0f0", color: "#555" }}>{cat.icon} {cat.name}</span>);
 };
-
-// ==========================================
-// NEWS CARD & AKTUELL VIEW
-// ==========================================
 
 const NewsCard = ({ item }) => {
   const dateStr = new Date(item.date).toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" });
   return (
-    <a href={item.url} target="_blank" rel="noopener noreferrer" style={{
-        display: "block", textDecoration: "none", color: "inherit",
-        background: COLORS.bgCard, borderRadius: 12, padding: 20,
-        border: `1px solid ${COLORS.border}`,
-        transition: "transform 0.2s, box-shadow 0.2s, border-color 0.2s",
-      }}
+    <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", textDecoration: "none", color: "inherit", background: COLORS.bgCard, borderRadius: 12, padding: 20, border: "1px solid " + COLORS.border, transition: "transform 0.2s, box-shadow 0.2s, border-color 0.2s" }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08)"; e.currentTarget.style.borderColor = COLORS.accent; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; e.currentTarget.style.borderColor = COLORS.border; }}
-    >
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; e.currentTarget.style.borderColor = COLORS.border; }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-        <SourceBadge sourceId={item.source} small />
-        <CategoryBadge categoryId={item.category} />
+        <SourceBadge sourceId={item.source} small /><CategoryBadge categoryId={item.category} />
         <span style={{ fontSize: 11, color: COLORS.textMuted, marginLeft: "auto" }}>{dateStr}</span>
       </div>
       <h3 style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 700, color: COLORS.text, lineHeight: 1.4 }}>{item.title}</h3>
@@ -303,70 +266,40 @@ const NewsCard = ({ item }) => {
 };
 
 const AktuellView = ({ filter, searchTerm }) => {
-  const [news, setNews] = useState(CURRENT_NEWS);
+  const [news, setNews] = useState(FALLBACK_NEWS);
   const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [liveSources, setLiveSources] = useState([]);
+  const fetchedRef = useRef(false);
 
   useEffect(function() {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
     fetchLiveNews().then(function(result) {
-      if (result && result.news) {
-        CURRENT_NEWS = result.news;
-        setNews(result.news);
-        setIsLive(true);
-        if (result.sources) {
-          var names = [];
-          for (var i = 0; i < result.sources.length; i++) {
-            names.push(result.sources[i].label || result.sources[i].name);
-          }
-          setLiveSources(names);
-        }
+      if (result && result.news && result.news.length > 0) {
+        setNews(result.news); setIsLive(true);
+        if (result.sources) { setLiveSources(result.sources.map(function(s) { return s.label || s.name; })); }
       }
       setLoading(false);
     });
   }, []);
 
   var filtered = news.filter(function(n) {
-    return (filter === "all" || n.category === filter) &&
-    (!searchTerm || n.title.toLowerCase().includes(searchTerm.toLowerCase()) || (n.summary && n.summary.toLowerCase().includes(searchTerm.toLowerCase())))
+    return (filter === "all" || n.category === filter) && (!searchTerm || n.title.toLowerCase().includes(searchTerm.toLowerCase()) || (n.summary && n.summary.toLowerCase().includes(searchTerm.toLowerCase())));
   });
-
-  filtered.sort(function(a, b) {
-    return new Date(b.date || "2000-01-01").getTime() - new Date(a.date || "2000-01-01").getTime();
-  });
-
-  // Nur Nachrichten der letzten 120 Tage
+  filtered.sort(function(a, b) { return new Date(b.date || "2000-01-01").getTime() - new Date(a.date || "2000-01-01").getTime(); });
   var cutoff = Date.now() - (120 * 24 * 60 * 60 * 1000);
-  filtered = filtered.filter(function(n) {
-    return new Date(n.date || "2026-01-01").getTime() > cutoff;
-  });
+  filtered = filtered.filter(function(n) { return new Date(n.date || "2026-01-01").getTime() > cutoff; });
 
-  var statusText = loading
-    ? "Lade Nachrichten von 9 Quellen..."
-    : isLive
-      ? "Live – " + liveSources.length + " Quellen (" + filtered.length + " Meldungen)"
-      : filtered.length + " Nachrichten · Fallback-Daten";
+  var statusText = loading ? "Lade Nachrichten von 9 Quellen..." : isLive ? ("Live – " + liveSources.length + " Quellen (" + filtered.length + " Meldungen)") : (filtered.length + " Nachrichten · Fallback-Daten");
 
   return (
     <div>
-      <div style={{
-        display: "flex", alignItems: "center", gap: 8, marginBottom: 12,
-        padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-        background: loading ? "#fffaf0" : isLive ? "#f0fff4" : "#f0f7ff",
-        color: loading ? "#c69c2e" : isLive ? "#2f855a" : "#2b6cb0",
-        border: loading ? "1px solid #feebc8" : isLive ? "1px solid #c6f6d5" : "1px solid #bee3f8",
-      }}>
-        <span style={{ fontSize: 14 }}>{loading ? "⏳" : isLive ? "🟢" : "📰"}</span>
-        {statusText}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: loading ? "#fffaf0" : isLive ? "#f0fff4" : "#f0f7ff", color: loading ? "#c69c2e" : isLive ? "#2f855a" : "#2b6cb0", border: loading ? "1px solid #feebc8" : isLive ? "1px solid #c6f6d5" : "1px solid #bee3f8" }}>
+        <span style={{ fontSize: 14 }}>{loading ? "⏳" : isLive ? "🟢" : "📰"}</span>{statusText}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
-        {filtered.length === 0 ? (
-          <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 40, color: COLORS.textMuted }}>
-            Keine aktuellen Nachrichten in dieser Kategorie gefunden.
-          </div>
-        ) : (
-          filtered.map(function(item) { return React.createElement(NewsCard, { key: item.id + "-" + (item.title || "").substring(0,8), item: item }); })
-        )}
+        {filtered.length === 0 ? (<div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 40, color: COLORS.textMuted }}>Keine aktuellen Nachrichten in dieser Kategorie.</div>) : filtered.map(function(item, idx) { return React.createElement(NewsCard, { key: item.id || ("x-" + idx), item: item }); })}
       </div>
     </div>
   );
@@ -378,24 +311,12 @@ const AktuellView = ({ filter, searchTerm }) => {
 const WeatherRheinPanel = () => {
   const [weather, setWeather] = useState(null);
   const [pegel, setPegel] = useState(null);
-
   useEffect(function() {
     fetch("https://api.open-meteo.com/v1/forecast?latitude=49.3965&longitude=8.5328&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=Europe/Berlin")
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.current) {
-          var codes = {0:"Klar",1:"Überwiegend klar",2:"Teilweise bewölkt",3:"Bewölkt",45:"Nebel",48:"Reifnebel",51:"Leichter Nieselregen",53:"Nieselregen",61:"Leichter Regen",63:"Regen",65:"Starker Regen",71:"Leichter Schneefall",73:"Schneefall",80:"Regenschauer",95:"Gewitter"};
-          setWeather({ temp: Math.round(data.current.temperature_2m), desc: codes[data.current.weather_code] || "Bewölkt", humidity: data.current.relative_humidity_2m, wind: Math.round(data.current.wind_speed_10m) });
-        }
-      })
-      .catch(function() { setWeather({ temp: 8, desc: "Nicht verfügbar", humidity: 70, wind: 10 }); });
-
+      .then(function(r) { return r.json(); }).then(function(data) { if (data.current) { var codes = {0:"Klar",1:"Überwiegend klar",2:"Teilweise bewölkt",3:"Bewölkt",45:"Nebel",48:"Reifnebel",51:"Leichter Nieselregen",53:"Nieselregen",61:"Leichter Regen",63:"Regen",65:"Starker Regen",71:"Leichter Schneefall",73:"Schneefall",80:"Regenschauer",95:"Gewitter"}; setWeather({ temp: Math.round(data.current.temperature_2m), desc: codes[data.current.weather_code] || "Bewölkt", humidity: data.current.relative_humidity_2m, wind: Math.round(data.current.wind_speed_10m) }); } }).catch(function() { setWeather({ temp: 8, desc: "Nicht verfügbar", humidity: 70, wind: 10 }); });
     fetch("https://www.pegelonline.wsv.de/webservices/rest-api/v2/stations/MANNHEIM/W/currentmeasurement.json")
-      .then(function(r) { return r.json(); })
-      .then(function(data) { if (data.value) { setPegel({ level: (data.value / 100).toFixed(2), trend: "aktuell" }); } })
-      .catch(function() { setPegel({ level: "4.20", trend: "nicht verfügbar" }); });
+      .then(function(r) { return r.json(); }).then(function(data) { if (data.value) { setPegel({ level: (data.value / 100).toFixed(2), trend: "aktuell" }); } }).catch(function() { setPegel({ level: "4.20", trend: "nicht verfügbar" }); });
   }, []);
-
   if (!weather) return React.createElement(LoadingDots, null);
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
@@ -403,10 +324,7 @@ const WeatherRheinPanel = () => {
         <h3 style={{ margin: "0 0 12px", fontSize: 16, color: "#2a4365" }}>🌤️ Wetter Brühl</h3>
         <div style={{ fontSize: 48, fontWeight: 800, color: "#2a4365", marginBottom: 4 }}>{weather.temp}°C</div>
         <div style={{ fontSize: 14, color: "#4a6fa5", marginBottom: 12 }}>{weather.desc}</div>
-        <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#4a6fa5" }}>
-          <span>💧 {weather.humidity}%</span>
-          <span>💨 {weather.wind} km/h</span>
-        </div>
+        <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#4a6fa5" }}><span>💧 {weather.humidity}%</span><span>💨 {weather.wind} km/h</span></div>
       </div>
       <div style={{ background: "linear-gradient(135deg, #f0fff4, #c6f6d5)", borderRadius: 12, padding: 24, border: "1px solid #68d39140" }}>
         <h3 style={{ margin: "0 0 12px", fontSize: 16, color: "#22543d" }}>🌊 Rhein-Pegelstand</h3>
@@ -421,43 +339,31 @@ const WeatherRheinPanel = () => {
 // ==========================================
 // POLITIK PANEL
 // ==========================================
-const GEMEINDERAT_DATA = {
-  sitze: 22, wahlbeteiligung: "61,5%", wahlJahr: 2024,
-  buergermeister: { name: "Dr. Ralf Göck", partei: "SPD", seit: 1998 },
-  fraktionen: [
-    { name: "CDU", sitze: 6, farbe: "#1a1a1a", url: null, desc: "Stärkste Fraktion. Bildet mit FDP die CDU/FDP-Fraktion." },
-    { name: "SPD", sitze: 5, farbe: "#e3000f", url: "https://www.spd-bruehl-rohrhof.de", desc: "Bürgermeisterpartei." },
-    { name: "Freie Wähler", sitze: 4, farbe: "#ff8c00", url: "http://fw-bruehl-rohrhof.de", desc: "Eingetragener Verein, unabhängig." },
-    { name: "Grüne Liste", sitze: 3, farbe: "#46962b", url: "http://www.grueneliste-bruehl.de", desc: "Schwerpunkt Umwelt und Klimaschutz." },
-    { name: "AfD", sitze: 3, farbe: "#009ee0", url: null, desc: "Seit 2024 erstmals im Gemeinderat." },
-    { name: "FDP", sitze: 1, farbe: "#ffed00", url: null, desc: "Seit 2024 erstmals im Gemeinderat. CDU/FDP-Fraktion." },
-  ],
-};
+var GEMEINDERAT_DATA = { sitze: 22, wahlbeteiligung: "61,5%", wahlJahr: 2024, buergermeister: { name: "Dr. Ralf Göck", partei: "SPD", seit: 1998 }, fraktionen: [
+  { name: "CDU", sitze: 6, farbe: "#1a1a1a", url: null, desc: "Stärkste Fraktion. CDU/FDP-Fraktion." },
+  { name: "SPD", sitze: 5, farbe: "#e3000f", url: "https://www.spd-bruehl-rohrhof.de", desc: "Bürgermeisterpartei." },
+  { name: "Freie Wähler", sitze: 4, farbe: "#ff8c00", url: "http://fw-bruehl-rohrhof.de", desc: "Eingetragener Verein, unabhängig." },
+  { name: "Grüne Liste", sitze: 3, farbe: "#46962b", url: "http://www.grueneliste-bruehl.de", desc: "Schwerpunkt Umwelt und Klimaschutz." },
+  { name: "AfD", sitze: 3, farbe: "#009ee0", url: null, desc: "Seit 2024 erstmals im Gemeinderat." },
+  { name: "FDP", sitze: 1, farbe: "#ffed00", url: null, desc: "Seit 2024 erstmals. CDU/FDP-Fraktion." },
+]};
 
 const PolitikPanel = () => (
   <div>
     <div style={{ background: "linear-gradient(135deg, #1a365d08, #c69c2e08)", borderRadius: 12, padding: 20, marginBottom: 20, border: "1px solid " + COLORS.border }}>
       <h3 style={{ margin: "0 0 12px", fontSize: 16, color: COLORS.primary }}>Gemeinderat Brühl</h3>
-      <div style={{ fontSize: 13, color: COLORS.text, marginBottom: 4 }}>
-        <strong>Bürgermeister:</strong> {GEMEINDERAT_DATA.buergermeister.name} ({GEMEINDERAT_DATA.buergermeister.partei}, seit {GEMEINDERAT_DATA.buergermeister.seit})
-      </div>
+      <div style={{ fontSize: 13, color: COLORS.text, marginBottom: 4 }}><strong>Bürgermeister:</strong> {GEMEINDERAT_DATA.buergermeister.name} ({GEMEINDERAT_DATA.buergermeister.partei}, seit {GEMEINDERAT_DATA.buergermeister.seit})</div>
       <div style={{ fontSize: 13, color: COLORS.textMuted }}>{GEMEINDERAT_DATA.sitze} Sitze · Wahl {GEMEINDERAT_DATA.wahlJahr} · Beteiligung: {GEMEINDERAT_DATA.wahlbeteiligung}</div>
     </div>
     <div style={{ display: "flex", borderRadius: 8, overflow: "hidden", marginBottom: 20, height: 32 }}>
-      {GEMEINDERAT_DATA.fraktionen.map(function(f) {
-        return React.createElement("div", { key: f.name, style: { flex: f.sitze, background: f.farbe, display: "flex", alignItems: "center", justifyContent: "center", color: f.farbe === "#ffed00" ? "#333" : "#fff", fontSize: 10, fontWeight: 700 }, title: f.name + ": " + f.sitze + " Sitze" }, f.sitze);
-      })}
+      {GEMEINDERAT_DATA.fraktionen.map(function(f) { return React.createElement("div", { key: f.name, style: { flex: f.sitze, background: f.farbe, display: "flex", alignItems: "center", justifyContent: "center", color: f.farbe === "#ffed00" ? "#333" : "#fff", fontSize: 10, fontWeight: 700 }, title: f.name + ": " + f.sitze + " Sitze" }, f.sitze); })}
     </div>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
       {GEMEINDERAT_DATA.fraktionen.map(function(f) {
         return React.createElement("div", { key: f.name, style: { background: COLORS.bgCard, borderRadius: 10, padding: 16, border: "1px solid " + COLORS.border, borderLeft: "4px solid " + f.farbe } },
-          React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } },
-            React.createElement("h4", { style: { margin: 0, fontSize: 14, color: COLORS.text } }, f.name),
-            React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: f.farbe === "#ffed00" ? "#333" : f.farbe } }, f.sitze + " Sitze")
-          ),
+          React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } }, React.createElement("h4", { style: { margin: 0, fontSize: 14, color: COLORS.text } }, f.name), React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: f.farbe === "#ffed00" ? "#333" : f.farbe } }, f.sitze + " Sitze")),
           React.createElement("p", { style: { margin: 0, fontSize: 12, color: COLORS.textMuted } }, f.desc),
-          f.url ? React.createElement("a", { href: f.url, target: "_blank", rel: "noopener noreferrer", style: { fontSize: 11, color: COLORS.info, marginTop: 4, display: "inline-block" } }, "Website →") : null
-        );
+          f.url ? React.createElement("a", { href: f.url, target: "_blank", rel: "noopener noreferrer", style: { fontSize: 11, color: COLORS.info, marginTop: 4, display: "inline-block" } }, "Website →") : null);
       })}
     </div>
   </div>
@@ -468,25 +374,12 @@ const PolitikPanel = () => (
 // ==========================================
 const VereinePanel = () => {
   const [selectedType, setSelectedType] = useState("all");
-  const types = [
-    { id: "all", name: "Alle Vereine" }, { id: "sport", name: "Sport" },
-    { id: "kultur", name: "Kultur & Brauchtum" }, { id: "vereine", name: "Soziales & Kirche" },
-    { id: "feuerwehr", name: "Feuerwehr" }, { id: "umwelt", name: "Natur" },
-    { id: "wirtschaft", name: "Gewerbe" }, { id: "politik", name: "Politik" },
-  ];
+  const types = [{ id: "all", name: "Alle Vereine" }, { id: "sport", name: "Sport" }, { id: "kultur", name: "Kultur & Brauchtum" }, { id: "vereine", name: "Soziales & Kirche" }, { id: "feuerwehr", name: "Feuerwehr" }, { id: "umwelt", name: "Natur" }, { id: "wirtschaft", name: "Gewerbe" }, { id: "politik", name: "Politik" }];
   const filtered = VEREINE_DATA.filter(function(v) { return selectedType === "all" || v.category === selectedType; });
-
   return (
     <div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-        {types.map(t => (
-          <button key={t.id} onClick={() => setSelectedType(t.id)} style={{
-            padding: "5px 12px", borderRadius: 16, border: "1px solid " + (selectedType === t.id ? COLORS.primary : COLORS.border),
-            cursor: "pointer", fontSize: 11, fontWeight: selectedType === t.id ? 700 : 500,
-            background: selectedType === t.id ? COLORS.primary + "10" : "transparent",
-            color: selectedType === t.id ? COLORS.primary : COLORS.textMuted,
-          }}>{t.name}</button>
-        ))}
+        {types.map(t => (<button key={t.id} onClick={() => setSelectedType(t.id)} style={{ padding: "5px 12px", borderRadius: 16, border: "1px solid " + (selectedType === t.id ? COLORS.primary : COLORS.border), cursor: "pointer", fontSize: 11, fontWeight: selectedType === t.id ? 700 : 500, background: selectedType === t.id ? COLORS.primary + "10" : "transparent", color: selectedType === t.id ? COLORS.primary : COLORS.textMuted }}>{t.name}</button>))}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 14 }}>
         {filtered.map((v, i) => (
@@ -508,29 +401,99 @@ const VereinePanel = () => {
   );
 };
 
-// ==========================================
-// INFO / LINKS PANEL
-// ==========================================
 const InfoPanel = () => {
   const links = Object.entries(SOURCES).filter(function(e) { return e[0] !== "google_news" && e[0] !== "google_news_2"; }).map(function(e) { return e[1]; });
   return (
     <div>
       <h3 style={{ margin: "0 0 16px", fontSize: 16, color: COLORS.primary }}>📡 Datenquellen & Links</h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: 12 }}>
-        {links.map((src, i) => (
-          <a key={i} href={src.url} target="_blank" rel="noopener noreferrer" style={{
-            display: "flex", alignItems: "center", gap: 12, padding: 16,
-            background: COLORS.bgCard, borderRadius: 12, textDecoration: "none",
-            border: "1px solid " + COLORS.border,
-          }}>
-            <span style={{ fontSize: 28 }}>{src.icon}</span>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text }}>{src.name}</div>
-              <div style={{ fontSize: 11, color: src.color, fontWeight: 500 }}>Verbunden ✓</div>
-            </div>
-          </a>
-        ))}
+        {links.map((src, i) => (<a key={i} href={src.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 12, padding: 16, background: COLORS.bgCard, borderRadius: 12, textDecoration: "none", border: "1px solid " + COLORS.border }}><span style={{ fontSize: 28 }}>{src.icon}</span><div><div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text }}>{src.name}</div><div style={{ fontSize: 11, color: src.color, fontWeight: 500 }}>Verbunden ✓</div></div></a>))}
       </div>
+    </div>
+  );
+};
+
+// ==========================================
+// SERVICES PANEL (NEU)
+// ==========================================
+const ServicesPanel = () => {
+  const [section, setSection] = useState("notfall");
+  const sections = [{ id: "notfall", name: "Notfallnummern", icon: "🚨" }, { id: "schulen", name: "Schulen", icon: "🏫" }, { id: "kitas", name: "Kindergärten", icon: "👶" }, { id: "unternehmen", name: "Unternehmen", icon: "🏢" }];
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 20 }}>
+        {sections.map(s => (<button key={s.id} onClick={() => setSection(s.id)} style={{ padding: "7px 14px", borderRadius: 16, border: "1px solid " + (section === s.id ? COLORS.accent : COLORS.border), cursor: "pointer", fontSize: 12, fontWeight: section === s.id ? 700 : 500, background: section === s.id ? COLORS.accent + "15" : "transparent", color: section === s.id ? COLORS.accent : COLORS.textMuted }}>{s.icon} {s.name}</button>))}
+      </div>
+
+      {section === "notfall" && (<div>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16, color: COLORS.danger }}>🚨 Notfallnummern</h3>
+        <p style={{ margin: "0 0 16px", fontSize: 12, color: COLORS.textMuted }}>Wichtige Rufnummern für Brühl und Umgebung</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+          {NOTFALL_DATA.map((n, i) => (
+            <a key={i} href={"tel:" + n.nummer.replace(/[^0-9+]/g, "")} style={{ display: "flex", alignItems: "center", gap: 14, padding: 18, background: COLORS.bgCard, borderRadius: 12, textDecoration: "none", color: "inherit", border: "1px solid " + COLORS.border, borderLeft: "4px solid " + n.color, transition: "transform 0.15s, box-shadow 0.15s" }}
+              onMouseEnter={function(e) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.06)"; }}
+              onMouseLeave={function(e) { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}>
+              <span style={{ fontSize: 32, lineHeight: 1 }}>{n.icon}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text, marginBottom: 2 }}>{n.name}</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: n.color, letterSpacing: "0.5px" }}>{n.nummer}</div>
+                <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>{n.desc}</div>
+              </div>
+              <span style={{ fontSize: 20, color: n.color }}>📞</span>
+            </a>
+          ))}
+        </div>
+      </div>)}
+
+      {section === "schulen" && (<div>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16, color: COLORS.primary }}>🏫 Schulen in Brühl</h3>
+        <p style={{ margin: "0 0 16px", fontSize: 12, color: COLORS.textMuted }}>2 Grundschulen · 1 Realschule</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 14 }}>
+          {SCHULEN_DATA.map((s, i) => (<div key={i} style={{ background: COLORS.bgCard, borderRadius: 12, padding: 20, border: "1px solid " + COLORS.border }}>
+            <h4 style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 700, color: COLORS.text }}>{s.name}</h4>
+            <p style={{ margin: "0 0 10px", fontSize: 12, lineHeight: 1.6, color: COLORS.textMuted }}>{s.desc}</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12 }}>
+              <span style={{ color: COLORS.text }}>📍 {s.address}</span>
+              <a href={"tel:" + s.telefon.replace(/[^0-9+]/g, "")} style={{ color: COLORS.info, textDecoration: "none", fontWeight: 600 }}>📞 {s.telefon}</a>
+              {s.url && <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: COLORS.info, textDecoration: "none", fontWeight: 600 }}>🔗 Website</a>}
+            </div>
+          </div>))}
+        </div>
+      </div>)}
+
+      {section === "kitas" && (<div>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16, color: COLORS.primary }}>👶 Kindergärten in Brühl</h3>
+        <p style={{ margin: "0 0 16px", fontSize: 12, color: COLORS.textMuted }}>Kommunale und kirchliche Einrichtungen</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 14 }}>
+          {KINDERGARTEN_DATA.map((k, i) => (<div key={i} style={{ background: COLORS.bgCard, borderRadius: 12, padding: 20, border: "1px solid " + COLORS.border }}>
+            <h4 style={{ margin: "0 0 6px", fontSize: 14, fontWeight: 700, color: COLORS.text }}>{k.name}</h4>
+            <span style={{ display: "inline-block", fontSize: 10, padding: "2px 8px", borderRadius: 10, background: "#edf2f7", color: "#4a5568", fontWeight: 600, marginBottom: 8 }}>{k.traeger}</span>
+            <p style={{ margin: "0 0 10px", fontSize: 12, lineHeight: 1.6, color: COLORS.textMuted }}>{k.desc}</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12 }}>
+              <span style={{ color: COLORS.text }}>📍 {k.address}</span>
+              <a href={"tel:" + k.telefon.replace(/[^0-9+]/g, "")} style={{ color: COLORS.info, textDecoration: "none", fontWeight: 600 }}>📞 {k.telefon}</a>
+            </div>
+          </div>))}
+        </div>
+      </div>)}
+
+      {section === "unternehmen" && (<div>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16, color: COLORS.primary }}>🏢 Größere Unternehmen</h3>
+        <p style={{ margin: "0 0 16px", fontSize: 12, color: COLORS.textMuted }}>Wichtige Arbeitgeber und Gewerbetreibende in Brühl</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 14 }}>
+          {UNTERNEHMEN_DATA.map((u, i) => (<div key={i} style={{ background: COLORS.bgCard, borderRadius: 12, padding: 20, border: "1px solid " + COLORS.border }}>
+            <h4 style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: COLORS.text, lineHeight: 1.3 }}>{u.name}</h4>
+            <span style={{ display: "inline-block", fontSize: 10, padding: "2px 8px", borderRadius: 10, background: COLORS.accent + "15", color: COLORS.accent, fontWeight: 600, marginBottom: 8 }}>{u.branche}</span>
+            <p style={{ margin: "0 0 10px", fontSize: 12, lineHeight: 1.6, color: COLORS.textMuted }}>{u.desc}</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12 }}>
+              <span style={{ color: COLORS.text }}>📍 {u.address}</span>
+              {u.telefon && <a href={"tel:" + u.telefon.replace(/[^0-9+]/g, "")} style={{ color: COLORS.info, textDecoration: "none", fontWeight: 600 }}>📞 {u.telefon}</a>}
+              {u.url && <a href={u.url} target="_blank" rel="noopener noreferrer" style={{ color: COLORS.info, textDecoration: "none", fontWeight: 600 }}>🔗 Website</a>}
+            </div>
+          </div>))}
+        </div>
+      </div>)}
     </div>
   );
 };
@@ -545,95 +508,53 @@ function BruehlApp() {
 
   const tabs = [
     { id: "aktuell", name: "Aktuell", icon: "📰" },
+    { id: "services", name: "Services", icon: "🚨" },
     { id: "vereine", name: "Vereine", icon: "🤝" },
     { id: "politik", name: "Politik", icon: "🏛️" },
     { id: "wetter", name: "Wetter", icon: "🌊" },
     { id: "info", name: "Links", icon: "📡" },
   ];
 
-  const catFilters = CATEGORIES;
-
   return (
     <div style={{ minHeight: "100vh", background: COLORS.bg }}>
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
-
-      {/* HEADER */}
-      <header style={{
-        background: "linear-gradient(135deg, " + COLORS.primary + ", " + COLORS.primaryLight + ")",
-        color: "#fff", padding: "20px 24px 16px", position: "sticky", top: 0, zIndex: 100,
-        boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-      }}>
+      <header style={{ background: "linear-gradient(135deg, " + COLORS.primary + ", " + COLORS.primaryLight + ")", color: "#fff", padding: "20px 24px 16px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
             <BruehlWappen size={48} />
             <div>
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, fontFamily: "'Playfair Display', Georgia, serif", letterSpacing: "-0.5px" }}>
-                Brühl <span style={{ color: COLORS.accent }}>(Baden)</span>
-              </h1>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, fontFamily: "'Playfair Display', Georgia, serif", letterSpacing: "-0.5px" }}>Brühl <span style={{ color: COLORS.accent }}>(Baden)</span></h1>
               <p style={{ margin: 0, fontSize: 11, opacity: 0.7 }}>68782 · Rhein-Neckar-Kreis · seit 1157</p>
             </div>
           </div>
           <div style={{ display: "flex", gap: 4, overflowX: "auto" }}>
-            {tabs.map(t => (
-              <button key={t.id} onClick={() => { setTab(t.id); setFilter("all"); setSearchTerm(""); }} style={{
-                flex: 1, padding: "8px 6px", borderRadius: 8, border: "none", cursor: "pointer",
-                fontSize: 12, fontWeight: tab === t.id ? 700 : 500,
-                background: tab === t.id ? "rgba(255,255,255,0.2)" : "transparent",
-                color: tab === t.id ? "#fff" : "rgba(255,255,255,0.5)",
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 2, whiteSpace: "nowrap",
-              }}>
-                <span style={{ fontSize: 16 }}>{t.icon}</span> {t.name}
-              </button>
-            ))}
+            {tabs.map(t => (<button key={t.id} onClick={() => { setTab(t.id); setFilter("all"); setSearchTerm(""); }} style={{ flex: 1, padding: "8px 6px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: tab === t.id ? 700 : 500, background: tab === t.id ? "rgba(255,255,255,0.2)" : "transparent", color: tab === t.id ? "#fff" : "rgba(255,255,255,0.5)", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, whiteSpace: "nowrap" }}><span style={{ fontSize: 16 }}>{t.icon}</span> {t.name}</button>))}
           </div>
         </div>
       </header>
 
-      {/* CATEGORY FILTER */}
-      {tab === "aktuell" && (
-        <div style={{ background: COLORS.bgCard, borderBottom: "1px solid " + COLORS.border, padding: "10px 24px", overflowX: "auto", display: "flex", gap: 6 }}>
-          <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 6, width: "100%" }}>
-            {catFilters.map(cat => (
-              <button key={cat.id} onClick={() => setFilter(cat.id)} style={{
-                padding: "5px 12px", borderRadius: 16, border: "1px solid " + (filter === cat.id ? COLORS.accent : COLORS.border),
-                cursor: "pointer", fontSize: 11, fontWeight: filter === cat.id ? 700 : 500, whiteSpace: "nowrap",
-                background: filter === cat.id ? COLORS.accent + "15" : "transparent",
-                color: filter === cat.id ? COLORS.accent : COLORS.textMuted,
-              }}>
-                {cat.icon} {cat.name}
-              </button>
-            ))}
-          </div>
+      {tab === "aktuell" && (<div style={{ background: COLORS.bgCard, borderBottom: "1px solid " + COLORS.border, padding: "10px 24px", overflowX: "auto", display: "flex", gap: 6 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 6, width: "100%" }}>
+          {CATEGORIES.map(cat => (<button key={cat.id} onClick={() => setFilter(cat.id)} style={{ padding: "5px 12px", borderRadius: 16, border: "1px solid " + (filter === cat.id ? COLORS.accent : COLORS.border), cursor: "pointer", fontSize: 11, fontWeight: filter === cat.id ? 700 : 500, whiteSpace: "nowrap", background: filter === cat.id ? COLORS.accent + "15" : "transparent", color: filter === cat.id ? COLORS.accent : COLORS.textMuted }}>{cat.icon} {cat.name}</button>))}
         </div>
-      )}
+      </div>)}
 
-      {/* SEARCH */}
-      {tab === "aktuell" && (
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "16px 24px 0" }}>
-          <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-            placeholder="🔍 Nachrichten durchsuchen..."
-            style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1px solid " + COLORS.border, background: COLORS.bgCard, fontSize: 14, outline: "none", boxSizing: "border-box" }}
-          />
-        </div>
-      )}
+      {tab === "aktuell" && (<div style={{ maxWidth: 1200, margin: "0 auto", padding: "16px 24px 0" }}>
+        <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="🔍 Nachrichten durchsuchen..." style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1px solid " + COLORS.border, background: COLORS.bgCard, fontSize: 14, outline: "none", boxSizing: "border-box" }} />
+      </div>)}
 
-      {/* MAIN */}
       <main style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 24px 60px" }}>
         {tab === "aktuell" && <AktuellView filter={filter} searchTerm={searchTerm} />}
+        {tab === "services" && <ServicesPanel />}
         {tab === "vereine" && <VereinePanel />}
         {tab === "politik" && <PolitikPanel />}
         {tab === "wetter" && <WeatherRheinPanel />}
         {tab === "info" && <InfoPanel />}
       </main>
 
-      {/* FOOTER */}
       <footer style={{ background: COLORS.bgDark, color: "rgba(255,255,255,0.5)", padding: 24, textAlign: "center", fontSize: 11 }}>
-        <p style={{ margin: "0 0 8px" }}>
-          <strong style={{ color: COLORS.accent }}>Brühl (Baden) Heimat-App</strong> · 9 Quellen via Worker v5
-        </p>
-        <p style={{ margin: 0 }}>
-          Gemeinde · Schwetzinger Ztg. · Feuerwehr · TV Brühl · FV 1918 · Google News · Presseportal · Nussbaum · u.a.
-        </p>
+        <p style={{ margin: "0 0 8px" }}><strong style={{ color: COLORS.accent }}>Brühl (Baden) Heimat-App</strong> · 9 Quellen via Worker v5</p>
+        <p style={{ margin: 0 }}>Gemeinde · Schwetzinger Ztg. · Feuerwehr · TV Brühl · FV 1918 · Google News · Presseportal · Nussbaum · u.a.</p>
         <p style={{ margin: "8px 0 0", fontSize: 10 }}>Wetter: Open-Meteo · Pegel: WSV Pegelonline · PWA-fähig</p>
       </footer>
     </div>
