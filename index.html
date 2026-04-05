@@ -202,30 +202,23 @@ var WORKER_URL = "https://white-recipe-9a06.rsab1963.workers.dev";
 var _liveNewsCache = null;
 var _liveNewsFetching = false;
 var _liveNewsListeners = [];
-var _liveDebugInfo = "";
 
 function fetchLiveNews() {
   if (_liveNewsCache) return Promise.resolve(_liveNewsCache);
   if (_liveNewsFetching) return new Promise(function(resolve) { _liveNewsListeners.push(resolve); });
   _liveNewsFetching = true;
-  var startTime = Date.now();
 
-  // 45s Timeout (Worker braucht ~15-25s: 9 Quellen + Claude-Aufruf)
   var controller = new AbortController();
   var timeoutId = setTimeout(function() { controller.abort(); }, 45000);
 
   return fetch(WORKER_URL, { signal: controller.signal })
     .then(function(r) {
       clearTimeout(timeoutId);
-      _liveDebugInfo = "HTTP " + r.status + " in " + ((Date.now() - startTime) / 1000).toFixed(1) + "s";
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
     })
     .then(function(data) {
-      console.log("Worker-Response:", JSON.stringify(data).substring(0, 300));
-      _liveDebugInfo += " | Keys: " + Object.keys(data).join(",");
       if (data.error) {
-        _liveDebugInfo += " | Error: " + data.error;
         _liveNewsFetching = false;
         _liveNewsListeners.forEach(function(fn) { fn(null); }); _liveNewsListeners = [];
         return null;
@@ -236,10 +229,7 @@ function fetchLiveNews() {
           var key = (data.news[i].title || "").toLowerCase().trim();
           if (!seen[key]) { seen[key] = true; data.news[i].id = "live-" + i; unique.push(data.news[i]); }
         }
-        _liveDebugInfo += " | " + unique.length + " News";
         _liveNewsCache = { news: unique, sources: data.sources || [], failed: data.failed || [] };
-      } else {
-        _liveDebugInfo += " | news leer oder fehlt";
       }
       _liveNewsFetching = false;
       _liveNewsListeners.forEach(function(fn) { fn(_liveNewsCache); }); _liveNewsListeners = [];
@@ -247,9 +237,7 @@ function fetchLiveNews() {
     })
     .catch(function(e) {
       clearTimeout(timeoutId);
-      var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-      _liveDebugInfo = "FEHLER nach " + elapsed + "s: " + e.message;
-      console.log("Live-Daten nicht verfuegbar:", e.message, "nach", elapsed, "s");
+      console.log("Live-Daten nicht verfuegbar:", e.message);
       _liveNewsFetching = false;
       _liveNewsListeners.forEach(function(fn) { fn(null); }); _liveNewsListeners = [];
       return null;
@@ -328,10 +316,10 @@ const AktuellView = ({ filter, searchTerm }) => {
   filtered = filtered.filter(function(n) { return new Date(n.date || "2026-01-01").getTime() > cutoff; });
 
   var statusText = loading
-    ? ("Lade Live-Nachrichten... " + elapsed + "s (9 Quellen + KI-Aufbereitung)")
+    ? ("Lade Live-Nachrichten... " + elapsed + "s")
     : isLive
-      ? ("Live – " + liveSources.length + " Quellen (" + filtered.length + " Meldungen)")
-      : (filtered.length + " Nachrichten · Lokale Daten" + (_liveDebugInfo ? " · Worker: " + _liveDebugInfo : ""));
+      ? ("Live \u2013 " + liveSources.length + " Quellen (" + filtered.length + " Meldungen)")
+      : (filtered.length + " Nachrichten");
 
   return (
     <div>
@@ -340,7 +328,6 @@ const AktuellView = ({ filter, searchTerm }) => {
           <span style={{ fontSize: 14 }}>{loading ? "⏳" : isLive ? "🟢" : "📰"}</span>{statusText}
         </div>
         {loading && <div style={{ height: 3, borderRadius: 2, background: "#e2ddd4", overflow: "hidden" }}><div style={{ height: "100%", background: "#c69c2e", borderRadius: 2, width: Math.min(elapsed * 2.5, 95) + "%", transition: "width 1s linear" }} /></div>}
-        {!loading && _liveDebugInfo && <div style={{ fontSize: 10, fontWeight: 400, color: "#718096", fontFamily: "monospace" }}>Debug: {_liveDebugInfo}</div>}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
         {filtered.length === 0 ? (<div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 40, color: COLORS.textMuted }}>Keine aktuellen Nachrichten in dieser Kategorie.</div>) : filtered.map(function(item, idx) { return React.createElement(NewsCard, { key: item.id || ("x-" + idx), item: item }); })}
