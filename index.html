@@ -210,9 +210,9 @@ function fetchLiveNews() {
   _liveNewsFetching = true;
   var startTime = Date.now();
 
-  // 30s Timeout via AbortController
+  // 45s Timeout (Worker braucht ~15-25s: 9 Quellen + Claude-Aufruf)
   var controller = new AbortController();
-  var timeoutId = setTimeout(function() { controller.abort(); }, 30000);
+  var timeoutId = setTimeout(function() { controller.abort(); }, 45000);
 
   return fetch(WORKER_URL, { signal: controller.signal })
     .then(function(r) {
@@ -299,18 +299,25 @@ const AktuellView = ({ filter, searchTerm }) => {
   const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [liveSources, setLiveSources] = useState([]);
+  const [elapsed, setElapsed] = useState(0);
   const fetchedRef = useRef(false);
+  const timerRef = useRef(null);
 
   useEffect(function() {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
+    // Laufende Sekunden-Anzeige
+    var start = Date.now();
+    timerRef.current = setInterval(function() { setElapsed(Math.round((Date.now() - start) / 1000)); }, 1000);
     fetchLiveNews().then(function(result) {
+      clearInterval(timerRef.current);
       if (result && result.news && result.news.length > 0) {
         setNews(result.news); setIsLive(true);
         if (result.sources) { setLiveSources(result.sources.map(function(s) { return s.label || s.name; })); }
       }
       setLoading(false);
     });
+    return function() { clearInterval(timerRef.current); };
   }, []);
 
   var filtered = news.filter(function(n) {
@@ -320,7 +327,11 @@ const AktuellView = ({ filter, searchTerm }) => {
   var cutoff = Date.now() - (120 * 24 * 60 * 60 * 1000);
   filtered = filtered.filter(function(n) { return new Date(n.date || "2026-01-01").getTime() > cutoff; });
 
-  var statusText = loading ? "Lade Nachrichten von 9 Quellen..." : isLive ? ("Live – " + liveSources.length + " Quellen (" + filtered.length + " Meldungen)") : (filtered.length + " Nachrichten · Fallback-Daten");
+  var statusText = loading
+    ? ("Lade Live-Nachrichten... " + elapsed + "s (9 Quellen + KI-Aufbereitung)")
+    : isLive
+      ? ("Live – " + liveSources.length + " Quellen (" + filtered.length + " Meldungen)")
+      : (filtered.length + " Nachrichten · Lokale Daten" + (_liveDebugInfo ? " · Worker: " + _liveDebugInfo : ""));
 
   return (
     <div>
@@ -328,6 +339,7 @@ const AktuellView = ({ filter, searchTerm }) => {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 14 }}>{loading ? "⏳" : isLive ? "🟢" : "📰"}</span>{statusText}
         </div>
+        {loading && <div style={{ height: 3, borderRadius: 2, background: "#e2ddd4", overflow: "hidden" }}><div style={{ height: "100%", background: "#c69c2e", borderRadius: 2, width: Math.min(elapsed * 2.5, 95) + "%", transition: "width 1s linear" }} /></div>}
         {!loading && _liveDebugInfo && <div style={{ fontSize: 10, fontWeight: 400, color: "#718096", fontFamily: "monospace" }}>Debug: {_liveDebugInfo}</div>}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
