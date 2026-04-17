@@ -196,7 +196,48 @@ var FALLBACK_NEWS = [
 ];
 
 // ==========================================
-// LIVE-DATEN (v6: Timeout, Cache, Dedup, Debug)
+// NACHRICHTEN-CACHE (localStorage)
+// ==========================================
+var CACHE_KEY = "bruehl_news_cache";
+var CACHE_TS_KEY = "bruehl_news_ts";
+
+function getCachedNews() {
+  try {
+    var raw = localStorage.getItem(CACHE_KEY);
+    if (raw) {
+      var data = JSON.parse(raw);
+      if (Array.isArray(data) && data.length > 0) return data;
+    }
+  } catch (e) { /* localStorage nicht verfuegbar */ }
+  return null;
+}
+
+function saveCachedNews(news) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(news));
+    localStorage.setItem(CACHE_TS_KEY, new Date().toISOString());
+  } catch (e) { /* Speicher voll oder nicht verfuegbar */ }
+}
+
+function getCacheAge() {
+  try {
+    var ts = localStorage.getItem(CACHE_TS_KEY);
+    if (ts) {
+      var mins = Math.round((Date.now() - new Date(ts).getTime()) / 60000);
+      if (mins < 60) return "vor " + mins + " Min.";
+      if (mins < 1440) return "vor " + Math.round(mins / 60) + " Std.";
+      return "vor " + Math.round(mins / 1440) + " Tagen";
+    }
+  } catch (e) {}
+  return null;
+}
+
+// Beim Start: Gecachte oder Fallback-News laden
+var INITIAL_NEWS = getCachedNews() || FALLBACK_NEWS;
+var INITIAL_IS_CACHED = !!getCachedNews();
+
+// ==========================================
+// LIVE-DATEN
 // ==========================================
 var WORKER_URL = "https://white-recipe-9a06.rsab1963.workers.dev";
 var _liveNewsCache = null;
@@ -230,6 +271,8 @@ function fetchLiveNews() {
           if (!seen[key]) { seen[key] = true; data.news[i].id = "live-" + i; unique.push(data.news[i]); }
         }
         _liveNewsCache = { news: unique, sources: data.sources || [], failed: data.failed || [] };
+        // In localStorage speichern fuer naechsten Besuch
+        saveCachedNews(unique);
       }
       _liveNewsFetching = false;
       _liveNewsListeners.forEach(function(fn) { fn(_liveNewsCache); }); _liveNewsListeners = [];
@@ -283,8 +326,9 @@ const NewsCard = ({ item }) => {
 };
 
 const AktuellView = ({ filter, searchTerm }) => {
-  const [news, setNews] = useState(FALLBACK_NEWS);
+  const [news, setNews] = useState(INITIAL_NEWS);
   const [isLive, setIsLive] = useState(false);
+  const [isCached, setIsCached] = useState(INITIAL_IS_CACHED);
   const [loading, setLoading] = useState(true);
   const [liveSources, setLiveSources] = useState([]);
   const [elapsed, setElapsed] = useState(0);
@@ -294,13 +338,12 @@ const AktuellView = ({ filter, searchTerm }) => {
   useEffect(function() {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
-    // Laufende Sekunden-Anzeige
     var start = Date.now();
     timerRef.current = setInterval(function() { setElapsed(Math.round((Date.now() - start) / 1000)); }, 1000);
     fetchLiveNews().then(function(result) {
       clearInterval(timerRef.current);
       if (result && result.news && result.news.length > 0) {
-        setNews(result.news); setIsLive(true);
+        setNews(result.news); setIsLive(true); setIsCached(false);
         if (result.sources) { setLiveSources(result.sources.map(function(s) { return s.label || s.name; })); }
       }
       setLoading(false);
@@ -315,17 +358,23 @@ const AktuellView = ({ filter, searchTerm }) => {
   var cutoff = Date.now() - (120 * 24 * 60 * 60 * 1000);
   filtered = filtered.filter(function(n) { return new Date(n.date || "2026-01-01").getTime() > cutoff; });
 
+  var cacheAge = getCacheAge();
   var statusText = loading
     ? ("Lade Live-Nachrichten... " + elapsed + "s")
     : isLive
       ? ("Live \u2013 " + liveSources.length + " Quellen (" + filtered.length + " Meldungen)")
-      : (filtered.length + " Nachrichten");
+      : isCached
+        ? (filtered.length + " Nachrichten \u2013 gespeichert " + (cacheAge || ""))
+        : (filtered.length + " Nachrichten");
+  var statusBg = loading ? "#fffaf0" : isLive ? "#f0fff4" : isCached ? "#f5f0ff" : "#f0f7ff";
+  var statusColor = loading ? "#c69c2e" : isLive ? "#2f855a" : isCached ? "#6b46c1" : "#2b6cb0";
+  var statusBorder = loading ? "1px solid #feebc8" : isLive ? "1px solid #c6f6d5" : isCached ? "1px solid #e9d8fd" : "1px solid #bee3f8";
 
   return (
     <div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12, padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: loading ? "#fffaf0" : isLive ? "#f0fff4" : "#f0f7ff", color: loading ? "#c69c2e" : isLive ? "#2f855a" : "#2b6cb0", border: loading ? "1px solid #feebc8" : isLive ? "1px solid #c6f6d5" : "1px solid #bee3f8" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12, padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: statusBg, color: statusColor, border: statusBorder }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 14 }}>{loading ? "⏳" : isLive ? "🟢" : "📰"}</span>{statusText}
+          <span style={{ fontSize: 14 }}>{loading ? "\u23F3" : isLive ? "\uD83D\uDFE2" : isCached ? "\uD83D\uDCBE" : "\uD83D\uDCF0"}</span>{statusText}
         </div>
         {loading && <div style={{ height: 3, borderRadius: 2, background: "#e2ddd4", overflow: "hidden" }}><div style={{ height: "100%", background: "#c69c2e", borderRadius: 2, width: Math.min(elapsed * 2.5, 95) + "%", transition: "width 1s linear" }} /></div>}
       </div>
